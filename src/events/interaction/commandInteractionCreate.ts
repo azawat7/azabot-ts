@@ -1,6 +1,5 @@
 import { Interaction } from "discord.js";
-import BaseEvent from "@/base/BaseEvent";
-import CustomBaseClient from "@/base/CustomBaseClient";
+import { CustomBaseClient, BaseEvent } from "@/base";
 
 export default class CommandInteractionCreateEvent extends BaseEvent {
   constructor(client: CustomBaseClient) {

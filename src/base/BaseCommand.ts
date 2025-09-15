@@ -1,7 +1,7 @@
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
-import CustomBaseClient from "@/base/CustomBaseClient";
+import { CustomBaseClient } from "@/base";
 
-export default abstract class BaseCommand {
+export abstract class BaseCommand {
   constructor(
     public client: CustomBaseClient,
     public commandInfo: SlashCommandBuilder

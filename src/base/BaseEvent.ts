@@ -1,7 +1,7 @@
 import { ClientEvents } from "discord.js";
-import CustomBaseClient from "@/base/CustomBaseClient";
+import { CustomBaseClient } from "@/base";
 
-export default abstract class BaseEvent {
+export abstract class BaseEvent {
   constructor(
     public client: CustomBaseClient,
     public name: keyof ClientEvents

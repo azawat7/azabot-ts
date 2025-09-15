@@ -1,5 +1,4 @@
-import BaseEvent from "@/base/BaseEvent";
-import CustomBaseClient from "@/base/CustomBaseClient";
+import { CustomBaseClient, BaseEvent } from "@/base";
 
 export default class ClientReadyEvent extends BaseEvent {
   constructor(client: CustomBaseClient) {

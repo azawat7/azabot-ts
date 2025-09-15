@@ -6,10 +6,9 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import { glob } from "glob";
-import BaseCommand from "@/base/BaseCommand";
-import BaseEvent from "@/base/BaseEvent";
+import { BaseCommand, BaseEvent } from "@/base";
 
-export default class CustomBaseClient extends Client {
+export class CustomBaseClient extends Client {
   commands: Collection<String, BaseCommand>;
   events: Collection<keyof ClientEvents, BaseEvent>;
   constructor() {
