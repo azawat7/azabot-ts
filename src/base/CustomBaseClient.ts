@@ -7,10 +7,12 @@ import {
 } from "discord.js";
 import { glob } from "glob";
 import { BaseCommand, BaseEvent } from "@/base";
+import { DatabaseManager } from "@/database/DatabaseManager";
 
 export class CustomBaseClient extends Client {
   commands: Collection<String, BaseCommand>;
   events: Collection<keyof ClientEvents, BaseEvent>;
+  db: DatabaseManager;
   constructor() {
     super({
       intents: 3276799,
@@ -26,8 +28,10 @@ export class CustomBaseClient extends Client {
     });
     this.commands = new Collection();
     this.events = new Collection();
+    this.db = new DatabaseManager();
   }
   async start() {
+    await this.db.connect();
     await this.loadEvents();
     await this.loadCommands();
     await this.login(process.env.TOKEN);
