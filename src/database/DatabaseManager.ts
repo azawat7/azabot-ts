@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import { GuildMemberRepository } from "./repositories/GuildMemberRepository";
-import { GuildRepository } from "./repositories/GuildRepository";
+import { GuildMemberRepository } from "db/repositories/GuildMemberRepository";
+import { GuildRepository } from "db/repositories/GuildRepository";
 
 export class DatabaseManager {
   public guildMembers: GuildMemberRepository;

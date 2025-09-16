@@ -17,7 +17,8 @@
     "emitDecoratorMetadata": true,
     "baseUrl": "./src",
     "paths": {
-      "@/*": ["*"]
+      "@/*": ["*"],
+      "db/*": ["database/*"]
     }
   },
   "include": ["src/**/*"],
