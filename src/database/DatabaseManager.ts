@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { GuildMemberRepository } from "db/repositories/GuildMemberRepository";
 import { GuildRepository } from "db/repositories/GuildRepository";
+import { logger } from "@/utils/Logger";
 
 export class DatabaseManager {
   public guildMembers: GuildMemberRepository;
@@ -22,15 +23,15 @@ export class DatabaseManager {
         bufferCommands: false,
       };
       await mongoose.connect(process.env.MONGODB_URI!, options);
-      console.log("✅ Connected to MongoDB");
+      logger.info("Connected to MongoDB");
     } catch (error) {
-      console.error("❌ MongoDB connection failed:", error);
+      logger.error("MongoDB connection failed:", error);
       process.exit(1);
     }
   }
 
   async disconnect(): Promise<void> {
     await mongoose.disconnect();
-    console.log("✅ Disconnected from MongoDB");
+    logger.info("Disconnected from MongoDB");
   }
 }

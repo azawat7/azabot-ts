@@ -8,6 +8,7 @@ import {
 import { glob } from "glob";
 import { BaseCommand, BaseEvent } from "@/base";
 import { DatabaseManager } from "@/database/DatabaseManager";
+import { logger } from "@/utils/Logger";
 
 export class CustomBaseClient extends Client {
   commands: Collection<String, BaseCommand>;
@@ -59,7 +60,7 @@ export class CustomBaseClient extends Client {
       if (guild) await guild.commands.set(slashCommands);
     });
 
-    console.log(`✅ ${this.commands.size} Slash Commands loaded !`);
+    logger.info(`${this.commands.size} Slash Commands loaded`);
   }
 
   private async loadEvents() {
@@ -78,6 +79,6 @@ export class CustomBaseClient extends Client {
 
       this.on(EventInstance.name, (...args) => EventInstance.run(...args));
     }
-    console.log(`✅ ${this.events.size} Events loaded !`);
+    logger.info(`${this.events.size} Events loaded`);
   }
 }
