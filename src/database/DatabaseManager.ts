@@ -13,7 +13,15 @@ export class DatabaseManager {
 
   async connect(): Promise<void> {
     try {
-      await mongoose.connect(process.env.MONGODB_URI!);
+      const options = {
+        maxPoolSize: 10,
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+        retryWrites: true,
+        retryReads: true,
+        bufferCommands: false,
+      };
+      await mongoose.connect(process.env.MONGODB_URI!, options);
       console.log("✅ Connected to MongoDB");
     } catch (error) {
       console.error("❌ MongoDB connection failed:", error);
