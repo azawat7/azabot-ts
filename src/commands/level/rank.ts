@@ -81,7 +81,11 @@ export default class RankCommand extends BaseCommand {
     try {
       const targetUser =
         (interaction.options.get("user")?.user as User) || interaction.user;
-
+      if (targetUser.bot)
+        interaction.reply({
+          content: `You can't use this command on a bot.`,
+          flags: MessageFlags.Ephemeral,
+        });
       const rankData = await this.getRankData(interaction, targetUser);
       const canvas = await this.createRankCard(rankData);
 
