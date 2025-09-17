@@ -2,14 +2,17 @@ import mongoose from "mongoose";
 import { GuildMemberRepository } from "db/repositories/GuildMemberRepository";
 import { GuildRepository } from "db/repositories/GuildRepository";
 import { logger } from "@/utils/Logger";
+import { UserRepository } from "./repositories/UserRepository";
 
 export class DatabaseManager {
   public guildMembers: GuildMemberRepository;
   public guilds: GuildRepository;
+  public users: UserRepository;
 
   constructor() {
     this.guildMembers = new GuildMemberRepository();
     this.guilds = new GuildRepository();
+    this.users = new UserRepository();
   }
 
   async connect(): Promise<void> {

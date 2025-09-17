@@ -2,6 +2,7 @@ import { Snowflake } from "discord.js";
 import { GuildMember, IGuildMember } from "db/models/GuildMember";
 import { BaseRepository } from "db/repositories/BaseRepository";
 import { LevelUtils } from "@/utils/LevelUtils";
+import { logger } from "@/utils/Logger";
 
 export class GuildMemberRepository extends BaseRepository<IGuildMember> {
   constructor() {
@@ -54,5 +55,20 @@ export class GuildMemberRepository extends BaseRepository<IGuildMember> {
     if (!member || !member.lastXPGain) return false;
     const timeSinceLastGain = Date.now() - member.lastXPGain.getTime();
     return timeSinceLastGain < cooldownMs;
+  }
+
+  async getRank(guildId: Snowflake, userId: Snowflake): Promise<number | null> {
+    try {
+      const member = await this.getOrCreate(guildId, userId);
+      const rank = await this.model.countDocuments({
+        guildId,
+        xp: { $gt: member.xp },
+      });
+
+      return rank + 1;
+    } catch (e) {
+      logger.error("DB getRank:", e);
+      throw e;
+    }
   }
 }
