@@ -1,5 +1,5 @@
 import { Snowflake } from "discord.js";
-import { Guild, IGuild } from "db/models/Guild";
+import { Guild, IGuild, IGuildModules } from "db/models/Guild";
 import { BaseRepository } from "db/repositories/BaseRepository";
 
 export class GuildRepository extends BaseRepository<IGuild> {
@@ -14,5 +14,20 @@ export class GuildRepository extends BaseRepository<IGuild> {
     const result = await this.findOne({ guildId });
     if (!result) return await this.create({ guildId });
     return result;
+  }
+
+  async toggleModule(
+    guildId: Snowflake,
+    module: keyof IGuildModules
+  ): Promise<IGuild | null> {
+    const guild = await this.getOrCreate(guildId);
+    const moduleSettings = guild.modules[module];
+    moduleSettings.enabled = !moduleSettings.enabled;
+
+    const updatePath = `modules.${module}.enabled`;
+    return await this.updateOne(
+      { guildId },
+      { [updatePath]: moduleSettings.enabled }
+    );
   }
 }

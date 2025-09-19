@@ -124,6 +124,10 @@ export default class RankCommand extends BaseCommand {
     interaction: ChatInputCommandInteraction,
     targetUser: User
   ): Promise<RankCardData> {
+    const guildSettings = await this.client.db.guilds.getOrCreate(
+      interaction.guild?.id!
+    );
+    const levelModuleSettings = guildSettings.modules.levelModule;
     const guildMember = await this.client.db.guildMembers.getOrCreate(
       interaction.guild!.id,
       targetUser.id
@@ -134,13 +138,20 @@ export default class RankCommand extends BaseCommand {
       targetUser.id
     );
 
-    const currentLevelXP = LevelUtils.getXPForLevel(guildMember.level);
-    const nextLevelXP = LevelUtils.getXPForLevel(guildMember.level + 1);
+    const currentLevelXP = LevelUtils.getXPForLevel(
+      guildMember.level,
+      levelModuleSettings.messageXpFormula
+    );
+    const nextLevelXP = LevelUtils.getXPForLevel(
+      guildMember.level + 1,
+      levelModuleSettings.messageXpFormula
+    );
     const progressXP = guildMember.xp - currentLevelXP;
     const totalXPNeeded = nextLevelXP - currentLevelXP;
     const progressPercentage = LevelUtils.getLevelProgress(
       guildMember.xp,
-      guildMember.level
+      guildMember.level,
+      levelModuleSettings.messageXpFormula
     );
 
     return {

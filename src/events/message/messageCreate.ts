@@ -22,13 +22,18 @@ export default class MessageCreateEvent extends BaseEvent {
       );
       if (isOnCooldown) return;
 
+      const guildSettings = await this.client.db.guilds.getOrCreate(
+        message.guild.id
+      );
+
       const xpAmount =
         Math.floor(Math.random() * (this.XP_MAX - this.XP_MIN + 1)) +
         this.XP_MIN;
       const result = await this.client.db.guildMembers.addXP(
         message.guild.id,
         message.author.id,
-        xpAmount
+        xpAmount,
+        guildSettings.modules.levelModule.messageXpFormula
       );
     } catch (error) {
       logger.error("messageCreate, xp:", error);

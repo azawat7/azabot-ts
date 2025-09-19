@@ -1,7 +1,7 @@
 import { Snowflake } from "discord.js";
 import { GuildMember, IGuildMember } from "db/models/GuildMember";
 import { BaseRepository } from "db/repositories/BaseRepository";
-import { LevelUtils } from "@/utils/LevelUtils";
+import { LevelFormula, LevelUtils } from "@/utils/LevelUtils";
 import { logger } from "@/utils/Logger";
 
 export class GuildMemberRepository extends BaseRepository<IGuildMember> {
@@ -24,11 +24,11 @@ export class GuildMemberRepository extends BaseRepository<IGuildMember> {
   async addXP(
     guildId: Snowflake,
     userId: Snowflake,
-    xpAmount: number
+    xpAmount: number,
+    formula: LevelFormula
   ): Promise<{ member: IGuildMember; leveledUp: boolean }> {
     const member = await this.getOrCreate(guildId, userId);
-
-    const result = LevelUtils.addXP(member.xp, xpAmount);
+    const result = LevelUtils.addXP(member.xp, xpAmount, formula);
 
     const updatedMember = await this.updateOne(
       { guildId, userId },
