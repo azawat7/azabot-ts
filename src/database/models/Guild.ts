@@ -19,15 +19,21 @@ const GuildSchema = new Schema<IGuild>(
     modules: {
       levelModule: {
         enabled: { type: Boolean, default: false },
-        messageXpFormula: { type: String, default: "linear" },
-        messageXpMin: { type: Number, default: 15 },
-        messageXpMax: { type: Number, default: 25 },
-        messageXpCooldown: { type: Number, default: 60000 },
-        lvlUpMsgChannel: { type: String, default: "" },
-        lvlUpMsgChannelType: { type: String, default: "current" },
-        lvlUpMsgContent: { type: String, default: "Level up msg" },
-        roleRewardsStack: { type: Boolean, default: false },
-        roleRewardsArray: { type: Array, default: [] },
+        messageXp: {
+          messageXpFormula: { type: String, default: "linear" },
+          messageXpMin: { type: Number, default: 15 },
+          messageXpMax: { type: Number, default: 25 },
+          messageXpCooldown: { type: Number, default: 60000 },
+        },
+        lvlUpMsg: {
+          lvlUpMsgChannel: { type: String, default: "" },
+          lvlUpMsgChannelType: { type: String, default: "current" },
+          lvlUpMsgContent: { type: String, default: "Level up msg" },
+        },
+        roleRewards: {
+          roleRewardsStack: { type: Boolean, default: false },
+          roleRewardsArray: { type: Array, default: [] },
+        },
       },
     },
   },

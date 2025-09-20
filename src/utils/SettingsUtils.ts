@@ -104,20 +104,20 @@ export class SettingsUtils {
           settingKey as keyof (typeof ModulesConfigs)[typeof activeModule]
         ];
 
-      container.addSectionComponents((section) =>
-        section
-          .addTextDisplayComponents((textDisplay) =>
-            textDisplay.setContent(
-              `### ${settingKey}\n-# ${settingMetadata.description}\n`
-            )
-          )
-          .setButtonAccessory((button) =>
-            button
-              .setCustomId(`settings-${settingKey}`)
-              .setLabel("Change")
-              .setStyle(ButtonStyle.Primary)
-          )
-      );
+      // container.addSectionComponents((section) =>
+      //   section
+      //     .addTextDisplayComponents((textDisplay) =>
+      //       textDisplay.setContent(
+      //         `**${settingMetadata.name}**\n> -# ${settingMetadata.description}\nCurrent: **${settingValue}**`
+      //       )
+      //     )
+      //     .setButtonAccessory((button) =>
+      //       button
+      //         .setCustomId(`settings-${settingKey}`)
+      //         .setLabel("Change")
+      //         .setStyle(ButtonStyle.Primary)
+      //     )
+      // );
     }
 
     SettingsUtils.addSeparatorComponent(container, SeparatorSpacingSize.Large);
