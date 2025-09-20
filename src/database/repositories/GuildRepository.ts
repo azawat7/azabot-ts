@@ -1,6 +1,7 @@
 import { Snowflake } from "discord.js";
 import { Guild, IGuild, IGuildModules } from "db/models/Guild";
 import { BaseRepository } from "db/repositories/BaseRepository";
+import { ModuleConfigCategory, ModuleSettings } from "@/types/settings.types";
 
 export class GuildRepository extends BaseRepository<IGuild> {
   constructor() {
@@ -29,5 +30,16 @@ export class GuildRepository extends BaseRepository<IGuild> {
       { guildId },
       { [updatePath]: moduleSettings.enabled }
     );
+  }
+
+  async updateModuleSetting(
+    guildId: Snowflake,
+    module: keyof IGuildModules,
+    subCategory: keyof ModuleConfigCategory,
+    setting: string, // TODO ADD TYPE
+    newSetting: any
+  ) {
+    const updatePath = `modules.${module}.${subCategory}.${setting}`;
+    return await this.updateOne({ guildId }, { [updatePath]: newSetting });
   }
 }

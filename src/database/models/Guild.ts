@@ -1,10 +1,8 @@
-import { ILevelModule } from "@/types/settings.types";
+import { LEVEL_MODULE_CONFIG, ModuleSettings } from "@/types/settings.types";
 import { Snowflake } from "discord.js";
 import mongoose, { Document, Schema } from "mongoose";
 
-export interface IGuildModules {
-  levelModule: ILevelModule;
-}
+export interface IGuildModules extends ModuleSettings {}
 
 export interface IGuild extends Document {
   guildId: Snowflake;
@@ -13,27 +11,80 @@ export interface IGuild extends Document {
   updatedAt: Date;
 }
 
+function getDefaultValue(configOption: any): any {
+  if (
+    configOption &&
+    typeof configOption === "object" &&
+    "default" in configOption
+  ) {
+    return configOption.default;
+  }
+  return undefined;
+}
+
+function getMongooseType(configOption: any): any {
+  if (!configOption || typeof configOption !== "object") {
+    return mongoose.Schema.Types.Mixed;
+  }
+
+  switch (configOption.type) {
+    case "boolean":
+      return Boolean;
+    case "number":
+    case "time":
+      return Number;
+    case "text":
+    case "select":
+      return String;
+    case "array":
+      return Array;
+    case "tuple":
+      return Array;
+    default:
+      return mongoose.Schema.Types.Mixed;
+  }
+}
+
+function buildSchemaFromConfig(moduleConfig: any): any {
+  const schema: any = {};
+
+  for (const [categoryKey, categoryValue] of Object.entries(moduleConfig)) {
+    if (typeof categoryValue === "object" && categoryValue !== null) {
+      schema[categoryKey] = {};
+
+      for (const [settingKey, settingConfig] of Object.entries(
+        categoryValue as any
+      )) {
+        if (settingKey === "name" || settingKey === "description") {
+          continue;
+        }
+
+        if (
+          typeof settingConfig === "object" &&
+          settingConfig !== null &&
+          "type" in settingConfig
+        ) {
+          schema[categoryKey][settingKey] = {
+            type: getMongooseType(settingConfig),
+            default: getDefaultValue(settingConfig),
+          };
+        }
+      }
+    }
+  }
+  return schema;
+}
+
 const GuildSchema = new Schema<IGuild>(
   {
     guildId: { type: String, required: true, unique: true, index: true },
     modules: {
       levelModule: {
-        enabled: { type: Boolean, default: false },
-        messageXp: {
-          messageXpFormula: { type: String, default: "linear" },
-          messageXpMin: { type: Number, default: 15 },
-          messageXpMax: { type: Number, default: 25 },
-          messageXpCooldown: { type: Number, default: 60000 },
+        enabled: {
+          type: Boolean,
+          default: false,
         },
-        lvlUpMsg: {
-          lvlUpMsgChannel: { type: String, default: "" },
-          lvlUpMsgChannelType: { type: String, default: "current" },
-          lvlUpMsgContent: { type: String, default: "Level up msg" },
-        },
-        roleRewards: {
-          roleRewardsStack: { type: Boolean, default: false },
-          roleRewardsArray: { type: Array, default: [] },
-        },
+        ...buildSchemaFromConfig(LEVEL_MODULE_CONFIG),
       },
     },
   },

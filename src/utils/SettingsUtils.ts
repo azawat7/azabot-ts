@@ -8,25 +8,24 @@ import {
   StringSelectMenuOptionBuilder,
 } from "discord.js";
 import { IGuild, IGuildModules } from "db/models/Guild";
-import { ModulesConfigs } from "@/types/settings.types";
-
-export const moduleDescriptions = {
-  levelModule: {
-    name: "Leveling",
-    emoji: "🧮",
-    description: "Fully customizable leveling system.",
-  },
-};
+import {
+  ALL_MODULE_CONFIGS,
+  MODULE_METADATA,
+  ModuleSettings,
+  ConfigOption,
+  ModuleConfigCategory,
+} from "@/types/settings.types";
 
 export class SettingsUtils {
   static createSettingsContainer(
     interaction: Interaction,
     guildData: IGuild,
-    activeModule?: keyof IGuildModules,
+    activeModule?: keyof ModuleSettings,
     activeSubcategory?: string
   ) {
     const moduleConfigs: IGuildModules = guildData.toObject().modules;
     const container = new ContainerBuilder();
+
     // HEADER
     SettingsUtils.addTextDisplayComponent(
       container,
@@ -37,11 +36,8 @@ export class SettingsUtils {
     // MAIN CONTENT
     if (activeModule) {
       if (!activeSubcategory) {
-        const moduleConfig = moduleConfigs[activeModule];
-        const subcategories = Object.keys(moduleConfig).filter(
-          (key) => key !== "enabled"
-        );
-        activeSubcategory = subcategories[0];
+        const moduleMetadata = MODULE_METADATA[activeModule];
+        activeSubcategory = moduleMetadata.categories[0];
       }
       SettingsUtils.createSubcategoryConfigPage(
         container,
@@ -62,12 +58,13 @@ export class SettingsUtils {
   ) {
     for (const moduleName of Object.keys(
       moduleConfigs
-    ) as (keyof IGuildModules)[]) {
-      const moduleDescription = moduleDescriptions[moduleName];
+    ) as (keyof ModuleSettings)[]) {
+      const moduleMetadata = MODULE_METADATA[moduleName];
       const moduleConfig = moduleConfigs[moduleName];
+
       SettingsUtils.addTextDisplayComponent(
         container,
-        `### ${moduleDescription.emoji}   ${moduleDescription.name}\n> -# ${moduleDescription.description}`
+        `### ${moduleMetadata.emoji}   ${moduleMetadata.name}\n> -# ${moduleMetadata.description}`
       );
 
       const statusButton = new ButtonBuilder()
@@ -77,15 +74,18 @@ export class SettingsUtils {
           moduleConfig.enabled ? ButtonStyle.Success : ButtonStyle.Danger
         )
         .setDisabled();
+
       const toggleButton = new ButtonBuilder()
-        .setCustomId(`settings-${moduleName}-toggle`)
+        .setCustomId(`settings-toggle-${moduleName}`)
         .setLabel(moduleConfig.enabled ? "Toggle Off" : "Toggle On")
         .setStyle(ButtonStyle.Secondary);
+
       const configureButton = new ButtonBuilder()
-        .setCustomId(`settings-${moduleName}-config`)
+        .setCustomId(`settings-config-${moduleName}`)
         .setLabel("Configure")
         .setStyle(ButtonStyle.Primary)
-        .setDisabled(moduleConfig.enabled ? false : true);
+        .setDisabled(!moduleConfig.enabled);
+
       SettingsUtils.addButtonRow(container, [
         statusButton,
         toggleButton,
@@ -103,37 +103,33 @@ export class SettingsUtils {
   static createSubcategoryConfigPage(
     container: ContainerBuilder,
     moduleConfigs: IGuildModules,
-    activeModule: keyof IGuildModules,
+    activeModule: keyof ModuleSettings,
     activeSubcategory: string
   ) {
-    const moduleDescription = moduleDescriptions[activeModule];
-    const moduleConfig = moduleConfigs[activeModule];
-    const subcategoryConfig = ModulesConfigs[activeModule][
-      activeSubcategory as keyof (typeof ModulesConfigs)[typeof activeModule]
-    ] as any;
+    const moduleMetadata = MODULE_METADATA[activeModule];
+    const moduleConfig = ALL_MODULE_CONFIGS[activeModule];
+    const subcategoryConfig = moduleConfig[
+      activeSubcategory
+    ] as ModuleConfigCategory;
     const currentValues =
       moduleConfigs[activeModule][
         activeSubcategory as keyof (typeof moduleConfigs)[typeof activeModule]
       ];
 
     // Get all subcategories for the select menu
-    const subcategories = Object.keys(moduleConfig).filter(
-      (key) => key !== "enabled"
-    );
+    const subcategories = moduleMetadata.categories;
 
     // Subcategory header with select menu
     SettingsUtils.addTextDisplayComponent(
       container,
-      `### ${moduleDescription.emoji}   ${moduleDescription.name} Configuration`
+      `### ${moduleMetadata.emoji}   ${moduleMetadata.name} Configuration`
     );
 
     const selectMenuOptions = subcategories.map((subcategory) => {
-      const subConfig = ModulesConfigs[activeModule][
-        subcategory as keyof (typeof ModulesConfigs)[typeof activeModule]
-      ] as any;
+      const subConfig = moduleConfig[subcategory] as ModuleConfigCategory;
 
       return new StringSelectMenuOptionBuilder()
-        .setLabel(subConfig.name || subcategory)
+        .setLabel(subConfig.name)
         .setValue(`settings-${activeModule}-${subcategory}`)
         .setDescription(subConfig.description)
         .setDefault(subcategory === activeSubcategory);
@@ -146,9 +142,10 @@ export class SettingsUtils {
     SettingsUtils.addSelectMenu(container, selectMenu);
     SettingsUtils.addSeparatorComponent(container, SeparatorSpacingSize.Large);
 
+    // Display individual settings
     if (typeof currentValues === "object" && currentValues !== null) {
       for (const [settingKey, settingValue] of Object.entries(currentValues)) {
-        const settingMetadata = subcategoryConfig?.[settingKey];
+        const settingMetadata = subcategoryConfig[settingKey] as ConfigOption;
 
         if (
           settingMetadata &&
@@ -165,7 +162,8 @@ export class SettingsUtils {
               `settings-change-${activeModule}-${activeSubcategory}-${settingKey}`
             )
             .setLabel("Change")
-            .setStyle(ButtonStyle.Primary);
+            .setStyle(ButtonStyle.Primary)
+            .setDisabled(settingMetadata.readonly === true);
 
           container.addSectionComponents((section) =>
             section
@@ -222,21 +220,48 @@ export class SettingsUtils {
     return `${firstLine}\n> -# ${secondLine}`;
   }
 
-  private static formatSettingValue(value: any, metadata: any): string {
-    if (metadata.type === "boolean") {
-      return value ? "Enabled" : "Disabled";
+  private static formatSettingValue(
+    value: any,
+    metadata: ConfigOption
+  ): string {
+    switch (metadata.type) {
+      case "boolean":
+        return value ? "✅ Enabled" : "❌ Disabled";
+
+      case "time": {
+        const unit = metadata.unit || "seconds";
+        return `${value} ${unit}`;
+      }
+
+      case "number": {
+        const unit = metadata.unit ? ` ${metadata.unit}` : "";
+        return `${value}${unit}`;
+      }
+
+      case "array":
+        return `${Array.isArray(value) ? value.length : 0} items`;
+
+      case "select":
+        return String(value);
+
+      case "text":
+        if (typeof value === "string" && value === "") {
+          return "Not set";
+        }
+        return String(value);
+
+      case "tuple":
+        if (Array.isArray(value)) {
+          return `[${value.join(", ")}]`;
+        }
+        return "Not configured";
+
+      default:
+        if (typeof value === "string" && value === "") {
+          return "Not set";
+        }
+        return String(value);
     }
-    if (metadata.type === "time") {
-      const unit = metadata.unit || "seconds";
-      return `${value} ${unit}`;
-    }
-    if (metadata.type === "array") {
-      return `${Array.isArray(value) ? value.length : 0} items`;
-    }
-    if (typeof value === "string" && value === "") {
-      return "Not set";
-    }
-    return String(value);
   }
 
   // CONTAINER UTILS
