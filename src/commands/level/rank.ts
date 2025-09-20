@@ -140,18 +140,18 @@ export default class RankCommand extends BaseCommand {
 
     const currentLevelXP = LevelUtils.getXPForLevel(
       guildMember.level,
-      levelModuleSettings.messageXpFormula
+      levelModuleSettings.messageXp.messageXpFormula
     );
     const nextLevelXP = LevelUtils.getXPForLevel(
       guildMember.level + 1,
-      levelModuleSettings.messageXpFormula
+      levelModuleSettings.messageXp.messageXpFormula
     );
     const progressXP = guildMember.xp - currentLevelXP;
     const totalXPNeeded = nextLevelXP - currentLevelXP;
     const progressPercentage = LevelUtils.getLevelProgress(
       guildMember.xp,
       guildMember.level,
-      levelModuleSettings.messageXpFormula
+      levelModuleSettings.messageXp.messageXpFormula
     );
 
     return {

@@ -52,6 +52,11 @@ export default class ButtonInteractionCreateEvent extends BaseEvent {
             SettingsUtils.createSettingsContainer(interaction, guildData),
           ],
         });
+        await interaction.reply({
+          content: "Success",
+          flags: MessageFlags.Ephemeral,
+        });
+        await interaction.deleteReply();
       }
       if (splitId[2] === "config") {
         const guildData = await this.client.db.guilds.getOrCreate(
@@ -66,6 +71,11 @@ export default class ButtonInteractionCreateEvent extends BaseEvent {
             ),
           ],
         });
+        await interaction.reply({
+          content: "Success",
+          flags: MessageFlags.Ephemeral,
+        });
+        await interaction.deleteReply();
       }
     }
   }

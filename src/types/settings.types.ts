@@ -81,7 +81,8 @@ export interface ILevelModule {
 
 export const LevelModuleConfig = {
   messageXp: {
-    name: "Message XP",
+    name: "Message XP Config",
+    description: "Earn random amounts of XP per message.",
     messageXpFormula: {
       name: "XP Formula",
       type: "select",
@@ -120,7 +121,9 @@ export const LevelModuleConfig = {
   },
 
   lvlUpMsg: {
-    name: "Level Up Message",
+    name: "Level Up Message Config",
+    description:
+      "Sends a level up message where ever you want when someone levels up.",
     lvlUpMsgChannel: {
       name: "Level Up Message Channel",
       type: "text",
@@ -150,7 +153,8 @@ export const LevelModuleConfig = {
   },
 
   roleRewards: {
-    name: "Role Rewards",
+    name: "Role Rewards Config",
+    description: "Gives out roles for reaching a certain level milestone.",
     roleRewardsStack: {
       name: "Role Reward Stack",
       type: "boolean",
