@@ -23,7 +23,7 @@ export class SettingsUtils {
     activeModule?: keyof ModuleSettings,
     activeSubcategory?: string
   ) {
-    const moduleConfigs: IGuildModules = guildData.toObject().modules;
+    const moduleSettings: IGuildModules = guildData.toObject().modules;
     const container = new ContainerBuilder();
 
     // HEADER
@@ -39,14 +39,14 @@ export class SettingsUtils {
         const moduleMetadata = MODULE_METADATA[activeModule];
         activeSubcategory = moduleMetadata.categories[0];
       }
-      SettingsUtils.createSubcategoryConfigPage(
+      SettingsUtils.createSubcategoryConfigurationPage(
         container,
-        moduleConfigs,
+        moduleSettings,
         activeModule,
         activeSubcategory
       );
     } else {
-      SettingsUtils.createModuleOverviewPage(container, moduleConfigs);
+      SettingsUtils.createModuleOverviewPage(container, moduleSettings);
     }
 
     return container;
@@ -54,13 +54,13 @@ export class SettingsUtils {
 
   static createModuleOverviewPage(
     container: ContainerBuilder,
-    moduleConfigs: IGuildModules
+    moduleSettings: IGuildModules
   ) {
     for (const moduleName of Object.keys(
-      moduleConfigs
+      moduleSettings
     ) as (keyof ModuleSettings)[]) {
       const moduleMetadata = MODULE_METADATA[moduleName];
-      const moduleConfig = moduleConfigs[moduleName];
+      const moduleData = moduleSettings[moduleName];
 
       SettingsUtils.addTextDisplayComponent(
         container,
@@ -69,22 +69,22 @@ export class SettingsUtils {
 
       const statusButton = new ButtonBuilder()
         .setCustomId(`settings-${moduleName}`)
-        .setLabel(moduleConfig.enabled ? "Enabled" : "Disabled")
+        .setLabel(moduleData.enabled ? "Enabled" : "Disabled")
         .setStyle(
-          moduleConfig.enabled ? ButtonStyle.Success : ButtonStyle.Danger
+          moduleData.enabled ? ButtonStyle.Success : ButtonStyle.Danger
         )
         .setDisabled();
 
       const toggleButton = new ButtonBuilder()
         .setCustomId(`settings-toggle-${moduleName}`)
-        .setLabel(moduleConfig.enabled ? "Toggle Off" : "Toggle On")
+        .setLabel(moduleData.enabled ? "Toggle Off" : "Toggle On")
         .setStyle(ButtonStyle.Secondary);
 
       const configureButton = new ButtonBuilder()
         .setCustomId(`settings-config-${moduleName}`)
         .setLabel("Configure")
         .setStyle(ButtonStyle.Primary)
-        .setDisabled(!moduleConfig.enabled);
+        .setDisabled(!moduleData.enabled);
 
       SettingsUtils.addButtonRow(container, [
         statusButton,
@@ -100,20 +100,20 @@ export class SettingsUtils {
     return container;
   }
 
-  static createSubcategoryConfigPage(
+  static createSubcategoryConfigurationPage(
     container: ContainerBuilder,
-    moduleConfigs: IGuildModules,
+    moduleSettings: IGuildModules,
     activeModule: keyof ModuleSettings,
     activeSubcategory: string
   ) {
     const moduleMetadata = MODULE_METADATA[activeModule];
-    const moduleConfig = ALL_MODULE_CONFIGS[activeModule];
-    const subcategoryConfig = moduleConfig[
+    const moduleConfiguration = ALL_MODULE_CONFIGS[activeModule];
+    const subcategoryConfiguration = moduleConfiguration[
       activeSubcategory
     ] as ModuleConfigCategory;
-    const currentValues =
-      moduleConfigs[activeModule][
-        activeSubcategory as keyof (typeof moduleConfigs)[typeof activeModule]
+    const currentSubcategoryValues =
+      moduleSettings[activeModule][
+        activeSubcategory as keyof (typeof moduleSettings)[typeof activeModule]
       ];
 
     // Get all subcategories for the select menu
@@ -126,12 +126,12 @@ export class SettingsUtils {
     );
 
     const selectMenuOptions = subcategories.map((subcategory) => {
-      const subConfig = moduleConfig[subcategory] as ModuleConfigCategory;
+      const subcategoryConfig = moduleConfiguration[subcategory] as ModuleConfigCategory;
 
       return new StringSelectMenuOptionBuilder()
-        .setLabel(subConfig.name)
+        .setLabel(subcategoryConfig.name)
         .setValue(`settings-${activeModule}-${subcategory}`)
-        .setDescription(subConfig.description)
+        .setDescription(subcategoryConfig.description)
         .setDefault(subcategory === activeSubcategory);
     });
 
@@ -143,18 +143,18 @@ export class SettingsUtils {
     SettingsUtils.addSeparatorComponent(container, SeparatorSpacingSize.Large);
 
     // Display individual settings
-    if (typeof currentValues === "object" && currentValues !== null) {
-      for (const [settingKey, settingValue] of Object.entries(currentValues)) {
-        const settingMetadata = subcategoryConfig[settingKey] as ConfigOption;
+    if (typeof currentSubcategoryValues === "object" && currentSubcategoryValues !== null) {
+      for (const [settingKey, settingValue] of Object.entries(currentSubcategoryValues)) {
+        const settingConfiguration = subcategoryConfiguration[settingKey] as ConfigOption;
 
         if (
-          settingMetadata &&
-          typeof settingMetadata === "object" &&
-          settingMetadata.name
+          settingConfiguration &&
+          typeof settingConfiguration === "object" &&
+          settingConfiguration.name
         ) {
           const displayValue = SettingsUtils.formatSettingValue(
             settingValue,
-            settingMetadata
+            settingConfiguration
           );
 
           const changeButton = new ButtonBuilder()
@@ -163,16 +163,16 @@ export class SettingsUtils {
             )
             .setLabel("Change")
             .setStyle(ButtonStyle.Primary)
-            .setDisabled(settingMetadata.readonly === true);
+            .setDisabled(settingConfiguration.readonly === true);
 
           container.addSectionComponents((section) =>
             section
-              .addTextDisplayComponents((tD) =>
-                tD.setContent(
+              .addTextDisplayComponents((textDisplay) =>
+                textDisplay.setContent(
                   `**${
-                    settingMetadata.name
+                    settingConfiguration.name
                   }**\n> -# ${SettingsUtils.formatDescription(
-                    settingMetadata.description
+                    settingConfiguration.description
                   )}\nCurrent: **${displayValue}**`
                 )
               )
@@ -222,19 +222,19 @@ export class SettingsUtils {
 
   private static formatSettingValue(
     value: any,
-    metadata: ConfigOption
+    settingConfiguration: ConfigOption
   ): string {
-    switch (metadata.type) {
+    switch (settingConfiguration.type) {
       case "boolean":
         return value ? "✅ Enabled" : "❌ Disabled";
 
       case "time": {
-        const unit = metadata.unit || "seconds";
+        const unit = settingConfiguration.unit || "seconds";
         return `${value} ${unit}`;
       }
 
       case "number": {
-        const unit = metadata.unit ? ` ${metadata.unit}` : "";
+        const unit = settingConfiguration.unit ? ` ${settingConfiguration.unit}` : "";
         return `${value}${unit}`;
       }
 

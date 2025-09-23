@@ -23,29 +23,29 @@ export default class SettingsInteractionCreateEvent extends BaseEvent {
     if (
       interaction.isAnySelectMenu() &&
       interaction.customId.startsWith("settings") &&
-      this.checkIfMemberIsAdmin(interaction)
+      this.checkIfUserIsAdmin(interaction)
     ) {
       await this.handleSelectMenuInteraction(interaction);
     }
     if (
       interaction.isButton() &&
       interaction.customId.startsWith("settings") &&
-      this.checkIfMemberIsAdmin(interaction)
+      this.checkIfUserIsAdmin(interaction)
     ) {
       await this.handleButtonInteraction(interaction);
     }
   }
 
   private async handleButtonInteraction(interaction: ButtonInteraction) {
-    const splitId = interaction.customId.split("-");
-    const [, action] = splitId;
-    if (action === "homePage" || action === "config") {
+    const customIdParts = interaction.customId.split("-");
+    const [, buttonAction] = customIdParts;
+    if (buttonAction === "homePage" || buttonAction === "config") {
       const guildData = await this.client.db.guilds.getOrCreate(
         interaction.guild?.id!
       );
 
       let moduleName: keyof ModuleSettings | undefined = undefined;
-      if (splitId[2]) moduleName = splitId[2] as keyof ModuleSettings;
+      if (customIdParts[2]) moduleName = customIdParts[2] as keyof ModuleSettings;
 
       interaction.update({
         components: [
@@ -57,10 +57,10 @@ export default class SettingsInteractionCreateEvent extends BaseEvent {
         ],
       });
     }
-    if (action === "toggle") {
+    if (buttonAction === "toggle") {
       this.handleToggleModuleButton(interaction);
     }
-    if (action === "change") {
+    if (buttonAction === "change") {
       this.handleSettingChangeButton(interaction);
     }
   }
@@ -68,16 +68,16 @@ export default class SettingsInteractionCreateEvent extends BaseEvent {
   private async handleSelectMenuInteraction(
     interaction: AnySelectMenuInteraction
   ) {
-    const [, action] = interaction.customId.split("-");
-    if (action === "subcategorySelect") {
-      await this.handleSelectMenuNav(interaction);
+    const [, selectMenuAction] = interaction.customId.split("-");
+    if (selectMenuAction === "subcategorySelect") {
+      await this.handleSelectMenuNavigation(interaction);
     }
   }
 
   //
 
   private async handleSettingChangeButton(interaction: ButtonInteraction) {
-    const [, , moduleName, subCategoryName, settingKey] =
+    const [, , moduleName, subcategoryName, settingKey] =
       interaction.customId.split("-") as [
         unknown,
         unknown,
@@ -89,17 +89,17 @@ export default class SettingsInteractionCreateEvent extends BaseEvent {
       interaction.guild?.id!
     );
 
-    const moduleConfig = ALL_MODULE_CONFIGS[moduleName];
-    const categoryConfig = moduleConfig[subCategoryName];
-    const settingConfig = categoryConfig[settingKey] as ConfigOption;
+    const moduleConfiguration = ALL_MODULE_CONFIGS[moduleName];
+    const subcategoryConfiguration = moduleConfiguration[subcategoryName];
+    const settingConfiguration = subcategoryConfiguration[settingKey] as ConfigOption;
 
-    switch (settingConfig.type) {
+    switch (settingConfiguration.type) {
       case "boolean":
         await this.handleBooleanSetting(
           interaction,
           guildData,
           moduleName,
-          subCategoryName,
+          subcategoryName,
           settingKey
         );
         break;
@@ -109,9 +109,9 @@ export default class SettingsInteractionCreateEvent extends BaseEvent {
       //     interaction,
       //     guildData,
       //     moduleName,
-      //     subCategoryName,
+      //     subcategoryName,
       //     settingKey,
-      //     settingConfig
+      //     settingConfiguration
       //   );
       //   break;
 
@@ -121,9 +121,9 @@ export default class SettingsInteractionCreateEvent extends BaseEvent {
       //   await this.handleInputSetting(
       //     interaction,
       //     moduleName,
-      //     subCategoryName,
+      //     subcategoryName,
       //     settingKey,
-      //     settingConfig,
+      //     settingConfiguration,
       //     currentValue
       //   );
       //   break;
@@ -133,9 +133,9 @@ export default class SettingsInteractionCreateEvent extends BaseEvent {
       //     interaction,
       //     guildData,
       //     moduleName,
-      //     subCategoryName,
+      //     subcategoryName,
       //     settingKey,
-      //     settingConfig
+      //     settingConfiguration
       //   );
       // break;
     }
@@ -147,17 +147,17 @@ export default class SettingsInteractionCreateEvent extends BaseEvent {
     interaction: ButtonInteraction,
     guildData: IGuild,
     moduleName: keyof ModuleSettings,
-    subCategoryName: string,
+    subcategoryName: string,
     settingKey: string
   ) {
     const moduleData = guildData.modules[moduleName] as any; // TODO ADD TYPE
-    const currentValue = moduleData[subCategoryName]?.[settingKey] as boolean;
+    const currentValue = moduleData[subcategoryName]?.[settingKey] as boolean;
     const newValue = !currentValue;
 
     guildData = (await this.client.db.guilds.updateModuleSetting(
       interaction.guild?.id!,
       moduleName,
-      subCategoryName,
+      subcategoryName,
       settingKey,
       newValue
     )) as IGuild;
@@ -167,7 +167,7 @@ export default class SettingsInteractionCreateEvent extends BaseEvent {
           interaction,
           guildData,
           moduleName,
-          subCategoryName
+          subcategoryName
         ),
       ],
     });
@@ -176,10 +176,10 @@ export default class SettingsInteractionCreateEvent extends BaseEvent {
   //
 
   private async handleToggleModuleButton(interaction: ButtonInteraction) {
-    const [, , selectedModule] = interaction.customId.split("-");
+    const [, , targetModule] = interaction.customId.split("-");
     const guildData = (await this.client.db.guilds.toggleModule(
       interaction.guild?.id!,
-      selectedModule as keyof ModuleSettings
+      targetModule as keyof ModuleSettings
     )) as IGuild;
     interaction.update({
       components: [
@@ -190,8 +190,8 @@ export default class SettingsInteractionCreateEvent extends BaseEvent {
 
   //
 
-  private async handleSelectMenuNav(interaction: AnySelectMenuInteraction) {
-    const [, activeModule, activeSubcategory] =
+  private async handleSelectMenuNavigation(interaction: AnySelectMenuInteraction) {
+    const [, selectedModule, selectedSubcategory] =
       interaction.values[0].split("-");
 
     const guildData = await this.client.db.guilds.getOrCreate(
@@ -203,8 +203,8 @@ export default class SettingsInteractionCreateEvent extends BaseEvent {
         SettingsUtils.createSettingsContainer(
           interaction,
           guildData,
-          activeModule as keyof ModuleSettings,
-          activeSubcategory
+          selectedModule as keyof ModuleSettings,
+          selectedSubcategory
         ),
       ],
     });
@@ -212,7 +212,7 @@ export default class SettingsInteractionCreateEvent extends BaseEvent {
 
   //
 
-  private checkIfMemberIsAdmin(
+  private checkIfUserIsAdmin(
     interaction: ButtonInteraction | AnySelectMenuInteraction
   ) {
     if (
