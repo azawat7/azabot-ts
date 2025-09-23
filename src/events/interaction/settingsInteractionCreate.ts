@@ -13,6 +13,9 @@ import {
   ConfigOption,
   ModuleConfigCategory,
   ModuleSettings,
+  AllSettingKeys,
+  SubcategoryKeys,
+  ModuleDataAccess,
 } from "@/types/settings.types";
 
 export default class SettingsInteractionCreateEvent extends BaseEvent {
@@ -83,7 +86,7 @@ export default class SettingsInteractionCreateEvent extends BaseEvent {
         unknown,
         keyof ModuleSettings,
         string,
-        any // TODO ADD TYPE
+        AllSettingKeys
       ];
     const guildData = await this.client.db.guilds.getOrCreate(
       interaction.guild?.id!
@@ -148,16 +151,16 @@ export default class SettingsInteractionCreateEvent extends BaseEvent {
     guildData: IGuild,
     moduleName: keyof ModuleSettings,
     subcategoryName: string,
-    settingKey: string
+    settingKey: AllSettingKeys
   ) {
-    const moduleData = guildData.modules[moduleName] as any; // TODO ADD TYPE
-    const currentValue = moduleData[subcategoryName]?.[settingKey] as boolean;
+    const moduleData = guildData.modules[moduleName] as ModuleDataAccess<typeof moduleName>;
+    const currentValue = (moduleData as any)[subcategoryName]?.[settingKey] as boolean;
     const newValue = !currentValue;
 
     guildData = (await this.client.db.guilds.updateModuleSetting(
       interaction.guild?.id!,
       moduleName,
-      subcategoryName,
+      subcategoryName as SubcategoryKeys<typeof moduleName>,
       settingKey,
       newValue
     )) as IGuild;

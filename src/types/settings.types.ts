@@ -95,6 +95,19 @@ export interface ModuleConfiguration {
   [categoryKey: string]: ModuleConfigCategory;
 }
 
+export type AllSettingKeys = 
+  | keyof LevelModuleSettings['messageXp']
+  | keyof LevelModuleSettings['lvlUpMsg'] 
+  | keyof LevelModuleSettings['roleRewards'];
+
+export type ModuleDataAccess<T extends keyof ModuleSettings> = {
+  [K in keyof ModuleSettings[T]]: ModuleSettings[T][K] extends object 
+    ? ModuleSettings[T][K] 
+    : ModuleSettings[T][K];
+};
+
+export type SubcategoryKeys<T extends keyof ModuleSettings> = keyof ModuleSettings[T];
+
 export const LEVEL_MODULE_CONFIG: ModuleConfiguration = {
   messageXp: {
     name: "Message XP Settings",
