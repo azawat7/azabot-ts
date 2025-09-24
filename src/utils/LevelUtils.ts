@@ -1,13 +1,13 @@
 export type LevelFormula = "linear" | "exponential" | "flat";
 export class LevelUtils {
-  static getXPForLevel(level: number, formula: LevelFormula): number {
+  static getXPForLevel(level: number, formula: LevelFormula, customFormula?: string): number {
     switch (formula) {
       case "linear":
         return level * 100 + 75;
       case "exponential":
-        return 5 * (level ^ 2) + level * 50 + 75;
+        return 5 * (level ** 2) + level * 50 + 75;
       case "flat":
-        return level * 1000;
+        return 1000 * level
     }
   }
 

@@ -116,7 +116,7 @@ export const LEVEL_MODULE_CONFIG: ModuleConfiguration = {
     messageXpFormula: {
       name: "XP Calculation Formula",
       type: "select",
-      options: ["linear", "exponential", "logarithmic", "custom"] as const,
+      options: ["linear", "exponential", "flat"] as const,
       default: "linear",
       description: "Formula used to calculate XP required for each level",
     } as SelectConfigOption<LevelFormula>,
