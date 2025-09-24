@@ -1,12 +1,7 @@
 import { Snowflake } from "discord.js";
-import { Guild, IGuild, IGuildModules } from "db/models/Guild";
+import { Guild, IGuild } from "db/models/Guild";
 import { BaseRepository } from "db/repositories/BaseRepository";
-import { 
-  ModuleConfigCategory, 
-  ModuleSettings, 
-  AllSettingKeys,
-  SubcategoryKeys 
-} from "@/types/settings.types";
+import { AllSettingKeys, ModuleSettings, SubcategoryKeys } from "@/types";
 
 export class GuildRepository extends BaseRepository<IGuild> {
   constructor() {
@@ -24,7 +19,7 @@ export class GuildRepository extends BaseRepository<IGuild> {
 
   async toggleModule(
     guildId: Snowflake,
-    module: keyof IGuildModules
+    module: keyof ModuleSettings
   ): Promise<IGuild | null> {
     const guild = await this.getOrCreate(guildId);
     const moduleSettings = guild.modules[module];

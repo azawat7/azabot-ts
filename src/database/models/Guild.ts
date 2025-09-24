@@ -1,12 +1,10 @@
-import { LEVEL_MODULE_CONFIG, ModuleSettings } from "@/types/settings.types";
+import { LEVEL_MODULE_CONFIG, ModuleSettings } from "@/types";
 import { Snowflake } from "discord.js";
 import mongoose, { Document, Schema } from "mongoose";
 
-export interface IGuildModules extends ModuleSettings {}
-
 export interface IGuild extends Document {
   guildId: Snowflake;
-  modules: IGuildModules;
+  modules: ModuleSettings;
   createdAt: Date;
   updatedAt: Date;
 }

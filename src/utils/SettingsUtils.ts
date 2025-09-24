@@ -7,14 +7,8 @@ import {
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
 } from "discord.js";
-import { IGuild, IGuildModules } from "db/models/Guild";
-import {
-  ALL_MODULE_CONFIGS,
-  MODULE_METADATA,
-  ModuleSettings,
-  ConfigOption,
-  ModuleConfigCategory,
-} from "@/types/settings.types";
+import { IGuild } from "db/models/Guild";
+import { ALL_MODULE_CONFIGS, ConfigOption, MODULE_METADATA, ModuleConfigCategory, ModuleSettings } from "@/types";
 
 export class SettingsUtils {
   static createSettingsContainer(
@@ -23,7 +17,7 @@ export class SettingsUtils {
     activeModule?: keyof ModuleSettings,
     activeSubcategory?: string
   ) {
-    const moduleSettings: IGuildModules = guildData.toObject().modules;
+    const moduleSettings: ModuleSettings = guildData.toObject().modules;
     const container = new ContainerBuilder();
 
     // HEADER
@@ -54,7 +48,7 @@ export class SettingsUtils {
 
   static createModuleOverviewPage(
     container: ContainerBuilder,
-    moduleSettings: IGuildModules
+    moduleSettings: ModuleSettings
   ) {
     for (const moduleName of Object.keys(
       moduleSettings
@@ -102,7 +96,7 @@ export class SettingsUtils {
 
   static createSubcategoryConfigurationPage(
     container: ContainerBuilder,
-    moduleSettings: IGuildModules,
+    moduleSettings: ModuleSettings,
     activeModule: keyof ModuleSettings,
     activeSubcategory: string
   ) {

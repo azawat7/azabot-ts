@@ -6,17 +6,9 @@ import {
   PermissionsBitField,
 } from "discord.js";
 import { CustomBaseClient, BaseEvent } from "@/base";
-import { IGuild, IGuildModules } from "@/database/models/Guild";
+import { IGuild } from "@/database/models/Guild";
 import { SettingsUtils } from "@/utils/SettingsUtils";
-import {
-  ALL_MODULE_CONFIGS,
-  ConfigOption,
-  ModuleConfigCategory,
-  ModuleSettings,
-  AllSettingKeys,
-  SubcategoryKeys,
-  ModuleDataAccess,
-} from "@/types/settings.types";
+import { ALL_MODULE_CONFIGS, AllSettingKeys, ConfigOption, ModuleDataAccess, ModuleSettings, SubcategoryKeys } from "@/types";
 
 export default class SettingsInteractionCreateEvent extends BaseEvent {
   constructor(client: CustomBaseClient) {

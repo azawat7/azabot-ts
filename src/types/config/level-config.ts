@@ -1,112 +1,14 @@
 import { LevelFormula } from "@/utils/LevelUtils";
-import { Snowflake } from "discord.js";
-
-export interface BaseConfigOption {
-  name: string;
-  description: string;
-  readonly?: boolean;
-}
-
-export interface BooleanConfigOption extends BaseConfigOption {
-  type: "boolean";
-  default: boolean;
-}
-
-export interface SelectConfigOption<T extends string> extends BaseConfigOption {
-  type: "select";
-  options: readonly T[];
-  default: T;
-}
-
-export interface NumberConfigOption extends BaseConfigOption {
-  type: "number";
-  min?: number;
-  max?: number;
-  default: number;
-  unit?: string;
-}
-
-export interface TextConfigOption extends BaseConfigOption {
-  type: "text";
-  maxLength?: number;
-  placeholder?: string;
-  default: string;
-}
-
-export interface TimeConfigOption extends BaseConfigOption {
-  type: "time";
-  unit: "seconds" | "minutes" | "hours";
-  min?: number;
-  max?: number;
-  default: number;
-}
-
-export interface ArrayConfigOption<T> extends BaseConfigOption {
-  type: "array";
-  itemType: T;
-  maxItems?: number;
-  default: any[];
-}
-
-export interface TupleConfigOption extends BaseConfigOption {
-  type: "tuple";
-  schema: [NumberConfigOption, TextConfigOption];
-}
-
-export type ConfigOption =
-  | BooleanConfigOption
-  | SelectConfigOption<any>
-  | NumberConfigOption
-  | TextConfigOption
-  | TimeConfigOption
-  | ArrayConfigOption<any>
-  | TupleConfigOption;
-
-export interface LevelModuleSettings {
-  enabled: boolean;
-  messageXp: {
-    messageXpFormula: LevelFormula;
-    messageXpMin: number;
-    messageXpMax: number;
-    messageXpCooldown: number;
-  };
-  lvlUpMsg: {
-    lvlUpMsgChannel: Snowflake;
-    lvlUpMsgChannelType: "disabled" | "current" | "pm" | "custom";
-    lvlUpMsgContent: string;
-  };
-  roleRewards: {
-    roleRewardsStack: boolean;
-    roleRewardsArray: [number, Snowflake][];
-  };
-}
-
-export interface ModuleSettings {
-  levelModule: LevelModuleSettings;
-}
-
-export interface ModuleConfigCategory {
-  name: string;
-  description: string;
-  [settingKey: string]: ConfigOption | string;
-}
-
-export interface ModuleConfiguration {
-  [categoryKey: string]: ModuleConfigCategory;
-}
-
-export type AllSettingKeys = 
-  | keyof LevelModuleSettings['messageXp']
-  | keyof LevelModuleSettings['lvlUpMsg'] 
-  | keyof LevelModuleSettings['roleRewards'];
-
-export type ModuleDataAccess<T extends keyof ModuleSettings> = {
-  [K in keyof ModuleSettings[T]]: ModuleSettings[T][K] extends object 
-    ? ModuleSettings[T][K] 
-    : ModuleSettings[T][K];
-};
-
-export type SubcategoryKeys<T extends keyof ModuleSettings> = keyof ModuleSettings[T];
+import {
+  ModuleConfiguration,
+  SelectConfigOption,
+  NumberConfigOption,
+  TimeConfigOption,
+  TextConfigOption,
+  BooleanConfigOption,
+  ArrayConfigOption,
+  TupleConfigOption
+} from "./base-config.types";
 
 export const LEVEL_MODULE_CONFIG: ModuleConfiguration = {
   messageXp: {
@@ -230,28 +132,3 @@ export const LEVEL_MODULE_CONFIG: ModuleConfiguration = {
     } as ArrayConfigOption<TupleConfigOption>,
   },
 } as const;
-
-export interface ModuleMetadata {
-  name: string;
-  emoji: string;
-  description: string;
-  categories: string[];
-}
-
-export const MODULE_METADATA: Record<keyof ModuleSettings, ModuleMetadata> = {
-  levelModule: {
-    name: "Leveling System",
-    emoji: "📈",
-    description:
-      "A comprehensive leveling system with XP, role rewards, and customizable progression",
-    categories: ["messageXp", "lvlUpMsg", "roleRewards"],
-  },
-};
-
-// All module configurations
-export const ALL_MODULE_CONFIGS: Record<
-  keyof ModuleSettings,
-  ModuleConfiguration
-> = {
-  levelModule: LEVEL_MODULE_CONFIG,
-};
