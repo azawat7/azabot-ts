@@ -1,7 +1,9 @@
-import "dotenv/config";
+import { config } from "dotenv";
+import path from "path";
 import { CustomBaseClient } from "@/base";
 import { logger } from "@shaw/utils";
 
+config({ path: path.resolve(__dirname, "../../.env") });
 function validateEnvironment() {
   const required = ["TOKEN", "MONGODB_URI", "GUILDID", "NODE_ENV"];
   const missing = required.filter((key) => !process.env[key]);

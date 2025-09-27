@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc && tsc-alias",
     "clean": "rimraf dist",
-    "dev": "cross-env NODE_ENV=dev ts-node -r tsconfig-paths/register .",
+    "dev": "cross-env NODE_ENV=dev ts-node -r tsconfig-paths/register . dotenv_config_path=../.env",
     "start": "cross-env NODE_ENV=prod node dist/index.js"
   },
   "devDependencies": {
