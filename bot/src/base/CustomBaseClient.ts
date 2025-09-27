@@ -39,19 +39,34 @@ export class CustomBaseClient extends Client {
     await this.login(process.env.TOKEN);
   }
 
-  // TODO MAKE IT DEV ENV COMPATIBLE
+  private getFileExtension(): string {
+    return process.env.NODE_ENV === "prod" ? "js" : "ts";
+  }
+
+  private async loadModule(fullPath: string): Promise<any> {
+    try {
+      if (process.env.NODE_ENV !== "prod") {
+        delete require.cache[require.resolve(fullPath)];
+      }
+      const module = require(fullPath);
+      return module.default || module;
+    } catch (error) {
+      const module = await import(fullPath);
+      return module.default || module;
+    }
+  }
 
   private async loadCommands() {
     const slashCommands: SlashCommandBuilder[] = [];
-
-    const commandFiles = await glob("commands/**/*.js", {
+    const fileExtension = this.getFileExtension();
+    const commandFiles = await glob(`commands/**/*.${fileExtension}`, {
       cwd: path.join(__dirname, ".."),
     });
 
     for (const file of commandFiles) {
       try {
         const fullPath = path.join(__dirname, "..", file);
-        const CommandClass = require(fullPath).default;
+        const CommandClass = await this.loadModule(fullPath);
         const command = new CommandClass(this) as BaseCommand;
         this.commands.set(command.commandInfo.name, command);
         slashCommands.push(command.commandInfo);
@@ -69,14 +84,15 @@ export class CustomBaseClient extends Client {
   }
 
   private async loadEvents() {
-    const eventFiles = await glob("events/**/*.js", {
+    const fileExtension = this.getFileExtension();
+    const eventFiles = await glob(`events/**/*.${fileExtension}`, {
       cwd: path.join(__dirname, ".."),
     });
 
     for (const file of eventFiles) {
       try {
         const fullPath = path.join(__dirname, "..", file);
-        const EventClass = require(fullPath).default;
+        const EventClass = await this.loadModule(fullPath);
         const event = new EventClass(this) as BaseEvent;
         this.events.set(event.name, event);
         this.on(event.name, (...args) => event.run(...args));
