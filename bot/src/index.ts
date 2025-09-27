@@ -3,9 +3,9 @@ import path from "path";
 import { CustomBaseClient } from "@/base";
 import { logger } from "@shaw/utils";
 
-config({ path: path.resolve(__dirname, "../../.env") });
+config({ path: path.resolve(__dirname, "../../.env"), quiet: true });
 function validateEnvironment() {
-  const required = ["TOKEN", "MONGODB_URI", "GUILDID", "NODE_ENV"];
+  const required = ["BOT_TOKEN", "BOT_GUILDID", "DB_MONGODB_URI", "NODE_ENV"];
   const missing = required.filter((key) => !process.env[key]);
   if (missing.length > 0) {
     logger.error("Missing required environment variables:");

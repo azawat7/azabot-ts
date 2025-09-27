@@ -25,7 +25,7 @@ export class DatabaseManager {
         retryReads: true,
         bufferCommands: false,
       };
-      await mongoose.connect(process.env.MONGODB_URI!, options);
+      await mongoose.connect(process.env.DB_MONGODB_URI!, options);
       logger.info("Connected to MongoDB");
     } catch (error) {
       logger.error("MongoDB connection failed:", error);

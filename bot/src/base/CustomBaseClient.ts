@@ -36,7 +36,7 @@ export class CustomBaseClient extends Client {
     await this.db.connect();
     await this.loadEvents();
     await this.loadCommands();
-    await this.login(process.env.TOKEN);
+    await this.login(process.env.BOT_TOKEN);
   }
 
   private getFileExtension(): string {
@@ -76,7 +76,7 @@ export class CustomBaseClient extends Client {
     }
 
     this.once("clientReady", async () => {
-      const guild = this.guilds.cache.get(process.env.GUILDID!)!;
+      const guild = this.guilds.cache.get(process.env.BOT_GUILDID!)!;
       await guild.commands.set(slashCommands);
     });
 
