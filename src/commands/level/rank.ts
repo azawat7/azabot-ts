@@ -154,6 +154,14 @@ export default class RankCommand extends BaseCommand {
       levelModuleSettings.messageXp.messageXpFormula
     );
 
+    console.log(
+      guildMember,
+      currentLevelXP,
+      nextLevelXP,
+      progressPercentage,
+      totalXPNeeded
+    );
+
     return {
       user: targetUser,
       level: guildMember.level,

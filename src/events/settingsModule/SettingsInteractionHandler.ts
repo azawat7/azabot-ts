@@ -10,11 +10,15 @@ import {
 } from "@/types";
 import { SettingsUtils } from "@/utils/SettingsUtils";
 import {
+  ActionRowBuilder,
   AnySelectMenuInteraction,
   ButtonInteraction,
   Interaction,
   MessageFlags,
+  ModalBuilder,
   PermissionsBitField,
+  TextInputBuilder,
+  TextInputStyle,
 } from "discord.js";
 
 type PossibleInteraction = ButtonInteraction | AnySelectMenuInteraction;
@@ -73,6 +77,12 @@ export default class SettingsInteractionHandlerEvent extends BaseEvent {
     const settingConfiguration = subcategoryConfiguration[
       settingKey
     ] as ConfigOption;
+
+    console.log(settingConfiguration);
+    const modal = new ModalBuilder()
+      .setCustomId(interaction.customId)
+      .setTitle(`Change the ${settingConfiguration.name}`);
+    const actionRow = new ActionRowBuilder<TextInputBuilder>();
 
     switch (settingConfiguration.type) {
       case "boolean":
@@ -194,7 +204,6 @@ export default class SettingsInteractionHandlerEvent extends BaseEvent {
       settingKey
     ] as boolean;
     const newValue = !currentValue;
-
     guildData = (await this.client.db.guilds.updateModuleSetting(
       interaction.guild?.id!,
       moduleName,

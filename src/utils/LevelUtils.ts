@@ -1,13 +1,13 @@
-export type LevelFormula = "linear" | "exponential" | "flat";
+export type LevelFormula = "classic" | "exponential" | "flat";
 export class LevelUtils {
   static getXPForLevel(level: number, formula: LevelFormula): number {
     switch (formula) {
-      case "linear":
-        return level * 100 + 75;
+      case "classic":
+        return Math.floor(100 * Math.pow(level - 1, 1.5));
       case "exponential":
-        return 5 * (level ** 2) + level * 50 + 75;
+        return 5 * (level - 1) ** 2 + (level - 1) * 50 + 75;
       case "flat":
-        return 1000 * level
+        return 1000 * (level - 1);
     }
   }
 
@@ -27,6 +27,7 @@ export class LevelUtils {
     const currentLevelXP = this.getXPForLevel(currentLevel, formula);
     const nextLevelXP = this.getXPForLevel(currentLevel + 1, formula);
     const progressXP = currentXP - currentLevelXP;
+    console.log(currentXP, currentLevelXP, progressXP);
     const totalXPNeeded = nextLevelXP - currentLevelXP;
     return Math.min(progressXP / totalXPNeeded, 1);
   }

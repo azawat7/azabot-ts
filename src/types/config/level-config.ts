@@ -7,7 +7,7 @@ import {
   TextConfigOption,
   BooleanConfigOption,
   ArrayConfigOption,
-  TupleConfigOption
+  TupleConfigOption,
 } from "./base-config.types";
 
 export const LEVEL_MODULE_CONFIG: ModuleConfiguration = {
@@ -18,8 +18,8 @@ export const LEVEL_MODULE_CONFIG: ModuleConfiguration = {
     messageXpFormula: {
       name: "XP Calculation Formula",
       type: "select",
-      options: ["linear", "exponential", "flat"] as const,
-      default: "linear",
+      options: ["classic", "exponential", "flat"] as const,
+      default: "classic",
       description: "Formula used to calculate XP required for each level",
     } as SelectConfigOption<LevelFormula>,
 
