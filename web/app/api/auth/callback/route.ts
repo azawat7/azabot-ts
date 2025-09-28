@@ -6,6 +6,7 @@ import {
   DiscordUser,
   SessionUser,
 } from "@/app/lib/types";
+import { logger } from "@shaw/utils";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -72,7 +73,7 @@ export async function GET(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("Discord OAuth error:", error);
+    logger.error("Discord OAuth error:", error);
     return NextResponse.redirect(new URL("/?error=auth_failed", request.url));
   }
 }

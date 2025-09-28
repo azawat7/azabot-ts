@@ -4,6 +4,7 @@ import { signJWT, verifyJWT } from "./jwt";
 import { DatabaseManager } from "@shaw/database";
 import { randomBytes } from "crypto";
 import { DiscordService } from "./discord-service";
+import { logger } from "@shaw/utils";
 
 const SESSION_COOKIE_NAME = "discord";
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000;
@@ -63,7 +64,7 @@ export class SessionManager {
     try {
       const payload = await verifyJWT(sessionCookie.value);
       if (!payload) {
-        await this.clearSession();
+        await this.clearSessionCookie();
         return null;
       }
 
@@ -71,7 +72,7 @@ export class SessionManager {
         payload.sessionId as string
       );
       if (!session) {
-        await this.clearSession();
+        await this.clearSessionCookie;
         return null;
       }
 
@@ -80,18 +81,24 @@ export class SessionManager {
           session.discordRefreshToken
         );
         if (!newTokenData) {
-          await this.clearSession();
           await this.db.sessions.deactivateSession(session.sessionId);
+          await this.clearSessionCookie();
           return null;
         }
 
         const newExpiry = new Date(Date.now() + newTokenData.expires_in * 1000);
-        await this.db.sessions.updateDiscordTokens(
+        const updatedSession = await this.db.sessions.updateDiscordTokens(
           session.sessionId,
           newTokenData.access_token,
           newTokenData.refresh_token,
           newExpiry
         );
+
+        if (!updatedSession) {
+          await this.db.sessions.deactivateSession(session.sessionId);
+          await this.clearSessionCookie();
+          return null;
+        }
 
         const freshUserData = await DiscordService.getUser(
           newTokenData.access_token
@@ -132,10 +139,15 @@ export class SessionManager {
         sessionId: session.sessionId,
       };
     } catch (error) {
-      console.error("Error getting session:", error);
+      logger.error("Error getting session:", error);
       await this.clearSession();
       return null;
     }
+  }
+
+  private static async clearSessionCookie(): Promise<void> {
+    const cookieStore = await cookies();
+    cookieStore.delete(SESSION_COOKIE_NAME);
   }
 
   static async clearSession(): Promise<void> {
@@ -156,7 +168,7 @@ export class SessionManager {
           }
         }
       } catch (error) {
-        console.error("Error during session cleanup:", error);
+        logger.error("Error during session cleanup:", error);
       }
     }
 

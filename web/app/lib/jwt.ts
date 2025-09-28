@@ -1,5 +1,6 @@
 import { jwtVerify, SignJWT } from "jose";
 import { CustomJWTPayload, SessionUser } from "./types";
+import { logger } from "@shaw/utils";
 
 const JWT_SECRET = new TextEncoder().encode(process.env.WEB_AUTH_SECRET!);
 const JWT_ALGORITHM = "HS256";
@@ -29,7 +30,7 @@ export async function verifyJWT(
 
     return payload as CustomJWTPayload;
   } catch (error) {
-    console.log(error);
+    logger.error(error as string);
     return null;
   }
 }

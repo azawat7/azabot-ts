@@ -35,29 +35,6 @@ export function useAuth() {
           sessionId: data.sessionId,
           hasValidDiscordToken: data.hasValidDiscordToken,
         });
-      } else if (response.status === 401) {
-        const refreshResponse = await fetch("/api/auth/refresh", {
-          method: "POST",
-        });
-
-        if (refreshResponse.ok) {
-          const refreshData = await refreshResponse.json();
-          setAuthState({
-            user: refreshData.user,
-            loading: false,
-            error: null,
-            sessionId: null,
-            hasValidDiscordToken: refreshData.hasValidDiscordToken,
-          });
-        } else {
-          setAuthState({
-            user: null,
-            loading: false,
-            error: null,
-            sessionId: null,
-            hasValidDiscordToken: false,
-          });
-        }
       } else {
         setAuthState({
           user: null,

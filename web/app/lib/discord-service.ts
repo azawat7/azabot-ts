@@ -66,7 +66,7 @@ export class DiscordService {
         }),
       });
     } catch (error) {
-      console.error("Failed to revoke Discord token:", error);
+      logger.error("Failed to revoke Discord token:", error);
     }
   }
 
