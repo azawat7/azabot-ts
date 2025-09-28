@@ -83,4 +83,5 @@ const GuildSchema = new Schema<IGuild>(
   }
 );
 
-export const Guild = mongoose.model<IGuild>("Guild", GuildSchema);
+export const Guild =
+  mongoose.models.Guild || mongoose.model<IGuild>("Guild", GuildSchema);

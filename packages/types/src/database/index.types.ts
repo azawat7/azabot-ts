@@ -21,3 +21,14 @@ export interface IUser extends Document {
   userId: Snowflake;
   rankAccentColor: string;
 }
+
+export interface ISession extends Document {
+  sessionId: string;
+  userId: Snowflake;
+  discordAccessToken: string;
+  discordRefreshToken: string;
+  discordTokenExpiry: Date;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}

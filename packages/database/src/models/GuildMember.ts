@@ -34,7 +34,6 @@ GuildMemberSchema.index({ userId: 1 });
 GuildMemberSchema.index({ guildId: 1 });
 GuildMemberSchema.index({ guildId: 1, xp: -1 });
 
-export const GuildMember = mongoose.model<IGuildMember>(
-  "GuildMember",
-  GuildMemberSchema
-);
+export const GuildMember =
+  mongoose.models.GuildMember ||
+  mongoose.model<IGuildMember>("GuildMember", GuildMemberSchema);

@@ -2,17 +2,21 @@ import mongoose from "mongoose";
 import { UserRepository } from "./repositories/UserRepository";
 import { GuildMemberRepository } from "./repositories/GuildMemberRepository";
 import { GuildRepository } from "./repositories/GuildRepository";
+import { SessionRepository } from "./repositories/SessionRepository";
 import { logger } from "@shaw/utils";
 
 export class DatabaseManager {
   public guildMembers: GuildMemberRepository;
   public guilds: GuildRepository;
   public users: UserRepository;
+  public sessions: SessionRepository;
+  private cleanupInterval?: NodeJS.Timeout;
 
   constructor() {
     this.guildMembers = new GuildMemberRepository();
     this.guilds = new GuildRepository();
     this.users = new UserRepository();
+    this.sessions = new SessionRepository();
   }
 
   async connect(): Promise<void> {
@@ -36,5 +40,15 @@ export class DatabaseManager {
   async disconnect(): Promise<void> {
     await mongoose.disconnect();
     logger.info("Disconnected from MongoDB");
+  }
+
+  startSessionCleanup(): void {
+    this.cleanupInterval = setInterval(async () => {
+      try {
+        await this.sessions.cleanupExpiredSessions();
+      } catch (error) {
+        logger.error("Session cleanup failed:", error);
+      }
+    }, 60 * 60 * 1000);
   }
 }
