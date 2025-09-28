@@ -16,7 +16,6 @@ export class SessionManager {
   private static async ensureConnection(): Promise<void> {
     if (!this.isConnected) {
       await this.db.connect();
-      this.db.startSessionCleanup();
       this.isConnected = true;
     }
   }
@@ -68,7 +67,7 @@ export class SessionManager {
         return null;
       }
 
-      const session = await this.db.sessions.getActiveSession(
+      const session = await this.db.sessions.getSession(
         payload.sessionId as string
       );
       if (!session) {
@@ -81,7 +80,7 @@ export class SessionManager {
           session.discordRefreshToken
         );
         if (!newTokenData) {
-          await this.db.sessions.deactivateSession(session.sessionId);
+          await this.db.sessions.deleteSession(session.sessionId);
           await this.clearSessionCookie();
           return null;
         }
@@ -95,7 +94,7 @@ export class SessionManager {
         );
 
         if (!updatedSession) {
-          await this.db.sessions.deactivateSession(session.sessionId);
+          await this.db.sessions.deleteSession(session.sessionId);
           await this.clearSessionCookie();
           return null;
         }
@@ -159,12 +158,12 @@ export class SessionManager {
       try {
         const payload = await verifyJWT(sessionCookie.value);
         if (payload) {
-          const session = await this.db.sessions.getActiveSession(
+          const session = await this.db.sessions.getSession(
             payload.sessionId as string
           );
           if (session) {
             await DiscordService.revokeToken(session.discordAccessToken);
-            await this.db.sessions.deactivateSession(session.sessionId);
+            await this.db.sessions.deleteSession(session.sessionId);
           }
         }
       } catch (error) {

@@ -28,7 +28,6 @@ export interface ISession extends Document {
   discordAccessToken: string;
   discordRefreshToken: string;
   discordTokenExpiry: Date;
-  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -10,7 +10,6 @@ export class DatabaseManager {
   public guilds: GuildRepository;
   public users: UserRepository;
   public sessions: SessionRepository;
-  private cleanupInterval?: NodeJS.Timeout;
 
   constructor() {
     this.guildMembers = new GuildMemberRepository();
@@ -40,15 +39,5 @@ export class DatabaseManager {
   async disconnect(): Promise<void> {
     await mongoose.disconnect();
     logger.info("Disconnected from MongoDB");
-  }
-
-  startSessionCleanup(): void {
-    this.cleanupInterval = setInterval(async () => {
-      try {
-        await this.sessions.cleanupExpiredSessions();
-      } catch (error) {
-        logger.error("Session cleanup failed:", error);
-      }
-    }, 60 * 60 * 1000);
   }
 }
