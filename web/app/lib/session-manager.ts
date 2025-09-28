@@ -7,7 +7,7 @@ import { DiscordService } from "./discord-service";
 import { logger } from "@shaw/utils";
 
 const SESSION_COOKIE_NAME = "discord";
-const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000;
+const SESSION_DURATION = 7 * 24 * 60 * 60;
 
 export class SessionManager {
   private static db = new DatabaseManager();

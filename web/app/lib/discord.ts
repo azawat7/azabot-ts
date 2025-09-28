@@ -12,7 +12,6 @@ export const DISCORD_CONFIG = {
 export function getDiscordAuthUrl(state?: string): string {
   const params = new URLSearchParams({
     client_id: DISCORD_CONFIG.clientId,
-    client_secret: DISCORD_CONFIG.clientSecret,
     redirect_uri: DISCORD_CONFIG.redirectUri,
     response_type: "code",
     scope: DISCORD_CONFIG.scope,
