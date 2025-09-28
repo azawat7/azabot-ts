@@ -11,6 +11,7 @@
     "@shaw/database": "*",
     "@shaw/types": "*",
     "@shaw/utils": "*",
+    "dotenv": "^17.2.2",
     "jose": "^6.1.0",
     "next": "15.5.4",
     "react": "19.1.0",
