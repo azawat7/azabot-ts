@@ -35,6 +35,14 @@ export function useAuth() {
           sessionId: data.sessionId,
           hasValidDiscordToken: data.hasValidDiscordToken,
         });
+      } else if (response.status === 401) {
+        setAuthState({
+          user: null,
+          loading: false,
+          error: null,
+          sessionId: null,
+          hasValidDiscordToken: false,
+        });
       } else {
         setAuthState({
           user: null,

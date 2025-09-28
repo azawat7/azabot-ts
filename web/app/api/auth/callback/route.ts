@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
     await SessionManager.createSession(sessionUser, tokenData);
 
     const response = NextResponse.redirect(new URL("/", request.url));
-    response.cookies.delete("oauth_state");
+    response.cookies.delete("state");
 
     return response;
   } catch (error) {

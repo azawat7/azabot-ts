@@ -72,7 +72,7 @@ export class SessionManager {
         payload.sessionId as string
       );
       if (!session) {
-        await this.clearSessionCookie;
+        await this.clearSessionCookie();
         return null;
       }
 
