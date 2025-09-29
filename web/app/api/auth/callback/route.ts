@@ -7,6 +7,29 @@ import {
   SessionUser,
 } from "@/app/lib/types";
 import { logger } from "@shaw/utils";
+import { DiscordService } from "@/app/lib/discord-service";
+
+enum AuthError {
+  ACCESS_DENIED = "access_denied",
+  NO_CODE = "no_code",
+  INVALID_STATE = "invalid_state",
+  TOKEN_EXCHANGE_FAILED = "token_exchange_failed",
+  USER_FETCH_FAILED = "user_fetch_failed",
+  SESSION_CREATION_FAILED = "session_creation_failed",
+}
+
+function redirectWithError(
+  request: NextRequest,
+  error: AuthError,
+  message?: string
+): NextResponse {
+  const url = new URL("/", request.url);
+  url.searchParams.set("error", error);
+  if (message) {
+    url.searchParams.set("message", message);
+  }
+  return NextResponse.redirect(url);
+}
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -15,50 +38,37 @@ export async function GET(request: NextRequest) {
   const error = searchParams.get("error");
 
   if (error) {
-    return NextResponse.redirect(new URL("/?error=access_denied", request.url));
+    logger.warn(`OAuth error from Discord: ${error}`);
+    return redirectWithError(request, AuthError.ACCESS_DENIED);
   }
 
   if (!code) {
-    return NextResponse.redirect(new URL("/?error=no_code", request.url));
+    logger.warn("No authorization code received");
+    return redirectWithError(request, AuthError.NO_CODE);
   }
-
   const storedState = request.cookies.get("state")?.value;
   if (!storedState || storedState !== state) {
-    return NextResponse.redirect(new URL("/?error=invalid_state", request.url));
+    logger.warn("State mismatch - possible CSRF attempt");
+    return redirectWithError(request, AuthError.INVALID_STATE);
   }
 
   try {
-    const tokenResponse = await fetch(DISCORD_CONFIG.tokenUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        client_id: DISCORD_CONFIG.clientId,
-        client_secret: DISCORD_CONFIG.clientSecret,
-        grant_type: "authorization_code",
-        code,
-        redirect_uri: DISCORD_CONFIG.redirectUri,
-      }),
-    });
+    const tokenData = await DiscordService.exchangeCode(
+      code,
+      DISCORD_CONFIG.redirectUri
+    );
 
-    if (!tokenResponse.ok) {
-      throw new Error("Failed to exchange code for token");
+    if (!tokenData) {
+      logger.error("Failed to exchange authorization code for tokens");
+      return redirectWithError(request, AuthError.TOKEN_EXCHANGE_FAILED);
     }
 
-    const tokenData: DiscordTokenResponse = await tokenResponse.json();
+    const userData = await DiscordService.getUser(tokenData.access_token);
 
-    const userResponse = await fetch(DISCORD_CONFIG.userUrl, {
-      headers: {
-        Authorization: `Bearer ${tokenData.access_token}`,
-      },
-    });
-
-    if (!userResponse.ok) {
-      throw new Error("Failed to fetch user data");
+    if (!userData) {
+      logger.error("Failed to fetch user data from Discord");
+      return redirectWithError(request, AuthError.USER_FETCH_FAILED);
     }
-
-    const userData: DiscordUser = await userResponse.json();
 
     const sessionUser: SessionUser = {
       id: userData.id,
@@ -71,9 +81,17 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.redirect(new URL("/", request.url));
     response.cookies.delete("state");
 
+    logger.info(
+      `User ${userData.username} (${userData.id}) authenticated successfully`
+    );
+
     return response;
   } catch (error) {
-    logger.error("Discord OAuth error:", error);
-    return NextResponse.redirect(new URL("/?error=auth_failed", request.url));
+    logger.error("Unexpected error during OAuth callback:", error);
+    return redirectWithError(
+      request,
+      AuthError.SESSION_CREATION_FAILED,
+      "An unexpected error occurred"
+    );
   }
 }

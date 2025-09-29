@@ -53,7 +53,10 @@ export class SessionRepository extends BaseRepository<ISession> {
     return await this.deleteOne({ sessionId });
   }
 
-  async deleteUserSessions(userId: Snowflake): Promise<void> {
-    await this.model.deleteMany({ userId });
+  async cleanupExpiredSessions(expiredDate: Date): Promise<number> {
+    const result = await this.model.deleteMany({
+      createdAt: { $lt: expiredDate },
+    });
+    return result.deletedCount;
   }
 }

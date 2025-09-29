@@ -17,6 +17,7 @@ export class SessionManager {
     if (!this.isConnected) {
       await this.db.connect();
       this.isConnected = true;
+      this.cleanupExpiredSessions(); // TODO ADD TIMED TASK ON THAT
     }
   }
 
@@ -76,60 +77,7 @@ export class SessionManager {
       }
 
       if (DiscordService.isTokenExpired(session.discordTokenExpiry)) {
-        const newTokenData = await DiscordService.refreshToken(
-          session.discordRefreshToken
-        );
-        if (!newTokenData) {
-          await this.db.sessions.deleteSession(session.sessionId);
-          await this.clearSessionCookie();
-          return null;
-        }
-
-        const newExpiry = new Date(Date.now() + newTokenData.expires_in * 1000);
-        const updatedSession = await this.db.sessions.updateDiscordTokens(
-          session.sessionId,
-          newTokenData.access_token,
-          newTokenData.refresh_token,
-          newExpiry
-        );
-
-        if (!updatedSession) {
-          await this.db.sessions.deleteSession(session.sessionId);
-          await this.clearSessionCookie();
-          return null;
-        }
-
-        const freshUserData = await DiscordService.getUser(
-          newTokenData.access_token
-        );
-        if (freshUserData) {
-          const updatedUser: SessionUser = {
-            id: freshUserData.id,
-            username: freshUserData.username,
-            avatar: freshUserData.avatar,
-          };
-
-          const newJWT = await signJWT(updatedUser, session.sessionId);
-          cookieStore.set(SESSION_COOKIE_NAME, newJWT, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge: SESSION_DURATION,
-            path: "/",
-          });
-
-          return {
-            user: updatedUser,
-            discordAccessToken: newTokenData.access_token,
-            sessionId: session.sessionId,
-          };
-        }
-
-        return {
-          user: payload.user,
-          discordAccessToken: newTokenData.access_token,
-          sessionId: session.sessionId,
-        };
+        return await this.refreshSession(session, payload.user, cookieStore);
       }
 
       return {
@@ -139,6 +87,73 @@ export class SessionManager {
       };
     } catch (error) {
       logger.error("Error getting session:", error);
+      await this.clearSession();
+      return null;
+    }
+  }
+
+  private static async refreshSession(
+    session: any,
+    user: any,
+    cookieStore: any
+  ) {
+    try {
+      const newTokenData = await DiscordService.refreshToken(
+        session.discordRefreshToken
+      );
+      if (!newTokenData) {
+        await this.db.sessions.deleteSession(session.sessionId);
+        await this.clearSessionCookie();
+        return null;
+      }
+
+      const newExpiry = new Date(Date.now() + newTokenData.expires_in * 1000);
+      const updatedSession = await this.db.sessions.updateDiscordTokens(
+        session.sessionId,
+        newTokenData.access_token,
+        newTokenData.refresh_token,
+        newExpiry
+      );
+
+      if (!updatedSession) {
+        await this.db.sessions.deleteSession(session.sessionId);
+        await this.clearSessionCookie();
+        return null;
+      }
+
+      const freshUserData = await DiscordService.getUser(
+        newTokenData.access_token
+      );
+      if (freshUserData) {
+        const updatedUser: SessionUser = {
+          id: freshUserData.id,
+          username: freshUserData.username,
+          avatar: freshUserData.avatar,
+        };
+
+        const newJWT = await signJWT(updatedUser, session.sessionId);
+        cookieStore.set(SESSION_COOKIE_NAME, newJWT, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: SESSION_DURATION,
+          path: "/",
+        });
+
+        return {
+          user: updatedUser,
+          discordAccessToken: newTokenData.access_token,
+          sessionId: session.sessionId,
+        };
+      }
+
+      return {
+        user,
+        discordAccessToken: newTokenData.access_token,
+        sessionId: session.sessionId,
+      };
+    } catch (error) {
+      logger.error("Error refreshing session:", error);
       await this.clearSession();
       return null;
     }
@@ -174,20 +189,15 @@ export class SessionManager {
     cookieStore.delete(SESSION_COOKIE_NAME);
   }
 
-  static async getValidDiscordToken(): Promise<string | null> {
-    const session = await this.getSession();
-    return session?.discordAccessToken || null;
-  }
+  static async cleanupExpiredSessions(): Promise<void> {
+    await this.ensureConnection();
 
-  static async makeDiscordAPICall(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<Response | null> {
-    const discordToken = await this.getValidDiscordToken();
-    if (!discordToken) {
-      throw new Error("No valid Discord token available");
+    try {
+      const expiredDate = new Date(Date.now() - SESSION_DURATION * 1000);
+      const result = await this.db.sessions.cleanupExpiredSessions(expiredDate);
+      logger.info(`Cleaned up ${result} expired sessions`);
+    } catch (error) {
+      logger.error("Error cleaning up expired sessions:", error);
     }
-
-    return DiscordService.makeAPICall(endpoint, discordToken, options);
   }
 }
