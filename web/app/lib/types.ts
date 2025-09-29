@@ -23,3 +23,17 @@ export interface SessionUser {
 export interface CustomJWTPayload extends JWTPayload {
   user: SessionUser;
 }
+
+export interface AuthState {
+  user: SessionUser | null;
+  loading: boolean;
+  error: string | null;
+  sessionId: string | null;
+  hasValidDiscordToken: boolean;
+}
+
+export interface UseAuthReturn extends AuthState {
+  refresh: () => Promise<void>;
+  logout: () => Promise<void>;
+  isAuthenticated: boolean;
+}

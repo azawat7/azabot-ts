@@ -1,21 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { SessionUser } from "@/app/lib/types";
-
-interface AuthState {
-  user: SessionUser | null;
-  loading: boolean;
-  error: string | null;
-  sessionId: string | null;
-  hasValidDiscordToken: boolean;
-}
-
-interface UseAuthReturn extends AuthState {
-  refresh: () => Promise<void>;
-  logout: () => Promise<void>;
-  isAuthenticated: boolean;
-}
+import { UseAuthReturn, AuthState } from "@/app/lib/types";
 
 const REFRESH_INTERVAL = 5 * 60 * 1000;
 
