@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SessionManager } from "./session-manager";
-import { SessionUser } from "./types";
+import { SessionManager } from "./";
+import { SessionUser } from "../types";
 import { logger } from "@shaw/utils";
 
 type AuthHandler = (
@@ -53,7 +53,7 @@ export async function withRecentAuth(
     }
 
     try {
-      const { verifyJWT } = await import("./jwt");
+      const { verifyJWT } = await import("./jwt.service");
       const payload = await verifyJWT(sessionCookie.value);
 
       if (!payload) {

@@ -1,9 +1,9 @@
 import { cookies } from "next/headers";
-import { DiscordTokenResponse, SessionUser } from "./types";
-import { signJWT, verifyJWT } from "./jwt";
+import { DiscordTokenResponse, SessionUser } from "../types";
+import { signJWT, verifyJWT } from "./";
 import { DatabaseManager } from "@shaw/database";
 import { randomBytes } from "crypto";
-import { DiscordService } from "./discord-service";
+import { DiscordService } from "../discord";
 import { logger } from "@shaw/utils";
 
 const SESSION_COOKIE_NAME = "discord";

@@ -1,5 +1,5 @@
 import { jwtVerify, SignJWT } from "jose";
-import { CustomJWTPayload, SessionUser } from "./types";
+import { CustomJWTPayload, SessionUser } from "../types";
 import { logger } from "@shaw/utils";
 
 const JWT_SECRET = new TextEncoder().encode(process.env.WEB_AUTH_SECRET!);

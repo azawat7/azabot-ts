@@ -17,7 +17,7 @@ interface UseAuthReturn extends AuthState {
   isAuthenticated: boolean;
 }
 
-const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const REFRESH_INTERVAL = 5 * 60 * 1000;
 
 export function useAuth(): UseAuthReturn {
   const [authState, setAuthState] = useState<AuthState>({

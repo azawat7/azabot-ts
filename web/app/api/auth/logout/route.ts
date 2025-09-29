@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SessionManager } from "@/app/lib/session-manager";
+import { SessionManager } from "@/app/lib/auth";
 
 export async function POST(request: NextRequest) {
   await SessionManager.clearSession();

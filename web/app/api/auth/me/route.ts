@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SessionManager } from "@/app/lib/session-manager";
+import { SessionManager } from "@/app/lib/auth";
 import { logger } from "@shaw/utils";
 
 export async function GET(request: NextRequest) {

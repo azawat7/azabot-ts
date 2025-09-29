@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { DISCORD_CONFIG } from "@/app/lib/discord";
-import { SessionManager } from "@/app/lib/session-manager";
-import {
-  DiscordTokenResponse,
-  DiscordUser,
-  SessionUser,
-} from "@/app/lib/types";
+import { DISCORD_CONFIG, DiscordService } from "@/app/lib/discord";
+import { SessionManager } from "@/app/lib/auth";
+import { SessionUser } from "@/app/lib/types";
 import { logger } from "@shaw/utils";
-import { DiscordService } from "@/app/lib/discord-service";
 
 enum AuthError {
   ACCESS_DENIED = "access_denied",
