@@ -21,11 +21,6 @@ export interface LevelModuleSettings {
   };
 }
 
-export type LevelModuleSettingKeys =
-  | keyof LevelModuleSettings["messageXp"]
-  | keyof LevelModuleSettings["lvlUpMsg"]
-  | keyof LevelModuleSettings["roleRewards"];
-
 export type LevelModuleSubcategories = keyof Omit<
   LevelModuleSettings,
   "enabled"
