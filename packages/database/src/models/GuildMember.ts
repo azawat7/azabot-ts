@@ -33,6 +33,7 @@ GuildMemberSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 GuildMemberSchema.index({ userId: 1 });
 GuildMemberSchema.index({ guildId: 1 });
 GuildMemberSchema.index({ guildId: 1, xp: -1 });
+GuildMemberSchema.index({ guildId: 1, xp: 1 });
 
 export const GuildMember =
   mongoose.models.GuildMember ||

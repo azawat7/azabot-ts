@@ -14,7 +14,7 @@ import { retryWithBackoff } from "./utils/RetryUtils";
 export class DatabaseManager {
   private static instance: DatabaseManager | null = null;
   private static connectionPromise: Promise<void> | null = null;
-  private static isConnected: boolean = false;
+  private static connectionLock = false;
 
   public guildMembers: GuildMemberRepository;
   public guilds: GuildRepository;
@@ -36,7 +36,10 @@ export class DatabaseManager {
   }
 
   async connect(): Promise<void> {
-    if (DatabaseManager.isConnected && mongoose.connection.readyState === 1) {
+    if (
+      !DatabaseManager.connectionLock &&
+      mongoose.connection.readyState === 1
+    ) {
       logger.debug("Database already connected");
       return;
     }
@@ -55,6 +58,8 @@ export class DatabaseManager {
   }
 
   private async doConnect(): Promise<void> {
+    DatabaseManager.connectionLock = true;
+
     const options = {
       maxPoolSize: 10,
       minPoolSize: 2,
@@ -70,12 +75,14 @@ export class DatabaseManager {
         async () => {
           if (mongoose.connection.readyState === 1) {
             logger.info("MongoDB already connected");
-            DatabaseManager.isConnected = true;
             return;
           }
 
+          if (mongoose.connection.readyState === 0) {
+            await mongoose.connection.close();
+          }
+
           await mongoose.connect(process.env.DB_MONGODB_URI!, options);
-          DatabaseManager.isConnected = true;
           logger.info("Successfully connected to MongoDB");
         },
         {
@@ -99,25 +106,25 @@ export class DatabaseManager {
         }
       );
     } catch (error) {
-      DatabaseManager.isConnected = false;
       const dbError = handleMongooseError(error);
       logger.error("MongoDB connection failed after all retries:", {
         error: dbError.message,
         code: dbError.code,
       });
       throw dbError;
+    } finally {
+      DatabaseManager.connectionLock = false;
     }
   }
 
   async disconnect(): Promise<void> {
-    if (!DatabaseManager.isConnected) {
+    if (mongoose.connection.readyState === 0) {
       logger.debug("Database not connected, skipping disconnect");
       return;
     }
 
     try {
       await mongoose.disconnect();
-      DatabaseManager.isConnected = false;
       logger.info("Disconnected from MongoDB");
     } catch (error) {
       const dbError = handleMongooseError(error);
@@ -130,7 +137,7 @@ export class DatabaseManager {
   }
 
   isConnectionReady(): boolean {
-    return DatabaseManager.isConnected && mongoose.connection.readyState === 1;
+    return mongoose.connection.readyState === 1;
   }
 
   async ensureConnection(): Promise<void> {
