@@ -10,15 +10,21 @@ const SESSION_COOKIE_NAME = "discord";
 const SESSION_DURATION = 7 * 24 * 60 * 60;
 
 export class SessionManager {
-  private static db = new DatabaseManager();
-  private static isConnected = false;
+  private static db = DatabaseManager.getInstance();
+  private static connectionPromise: Promise<void> | null = null;
 
   private static async ensureConnection(): Promise<void> {
-    if (!this.isConnected) {
-      await this.db.connect();
-      this.isConnected = true;
-      this.cleanupExpiredSessions(); // TODO ADD TIMED TASK ON THAT
+    if (this.connectionPromise) {
+      return this.connectionPromise;
     }
+    if (this.db.isConnectionReady()) {
+      return;
+    }
+    this.connectionPromise = this.db.connect().finally(() => {
+      this.connectionPromise = null;
+    });
+    this.cleanupExpiredSessions(); // TODO ADD TIMED TASK
+    return this.connectionPromise;
   }
 
   static async createSession(

@@ -30,7 +30,7 @@ export class CustomBaseClient extends Client {
     });
     this.commands = new Collection();
     this.events = new Collection();
-    this.db = new DatabaseManager();
+    this.db = DatabaseManager.getInstance();
   }
   async start() {
     await this.db.connect();
