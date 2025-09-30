@@ -3,6 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AppContent } from "./components/layout/AppContent";
 import { Inter } from "next/font/google";
+import { ScheduledTasks } from "@shaw/database";
 
 export const inter = Inter({
   subsets: ["latin"],
@@ -11,6 +12,12 @@ export const metadata: Metadata = {
   title: "azabot web app",
   description: "web dashboard for azabot",
 };
+
+if (typeof window === "undefined") {
+  ScheduledTasks.startAll().catch((error) => {
+    console.error("Failed to start scheduled tasks:", error);
+  });
+}
 
 export default function RootLayout({
   children,

@@ -11,20 +11,22 @@ const SESSION_DURATION = 7 * 24 * 60 * 60;
 
 export class SessionManager {
   private static db = DatabaseManager.getInstance();
-  private static connectionPromise: Promise<void> | null = null;
+  private static initPromise: Promise<void> | null = null;
 
   private static async ensureConnection(): Promise<void> {
-    if (this.connectionPromise) {
-      return this.connectionPromise;
+    if (this.initPromise) {
+      return this.initPromise;
     }
+
     if (this.db.isConnectionReady()) {
       return;
     }
-    this.connectionPromise = this.db.connect().finally(() => {
-      this.connectionPromise = null;
+
+    this.initPromise = this.db.connect().finally(() => {
+      this.initPromise = null;
     });
-    this.cleanupExpiredSessions(); // TODO ADD TIMED TASK
-    return this.connectionPromise;
+
+    return this.initPromise;
   }
 
   static async createSession(
@@ -201,7 +203,10 @@ export class SessionManager {
     try {
       const expiredDate = new Date(Date.now() - SESSION_DURATION * 1000);
       const result = await this.db.sessions.cleanupExpiredSessions(expiredDate);
-      logger.info(`Cleaned up ${result} expired sessions`);
+
+      if (result > 0) {
+        logger.info(`Cleaned up ${result} expired sessions`);
+      }
     } catch (error) {
       logger.error("Error cleaning up expired sessions:", error);
     }

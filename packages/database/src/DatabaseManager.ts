@@ -4,10 +4,16 @@ import { GuildMemberRepository } from "./repositories/GuildMemberRepository";
 import { GuildRepository } from "./repositories/GuildRepository";
 import { SessionRepository } from "./repositories/SessionRepository";
 import { logger } from "@shaw/utils";
+import {
+  ConnectionError,
+  ConnectionTimeoutError,
+  handleMongooseError,
+} from "./utils/DatabaseErrors";
+import { retryWithBackoff } from "./utils/RetryUtils";
 
 export class DatabaseManager {
   private static instance: DatabaseManager | null = null;
-  private static isConnecting: boolean = false;
+  private static connectionPromise: Promise<void> | null = null;
   private static isConnected: boolean = false;
 
   public guildMembers: GuildMemberRepository;
@@ -30,57 +36,76 @@ export class DatabaseManager {
   }
 
   async connect(): Promise<void> {
-    if (DatabaseManager.isConnected) {
+    if (DatabaseManager.isConnected && mongoose.connection.readyState === 1) {
       logger.debug("Database already connected");
       return;
     }
-    if (DatabaseManager.isConnecting) {
+    if (DatabaseManager.connectionPromise) {
       logger.debug("Database connection already in progress");
-      await this.waitForConnection();
-      return;
+      return DatabaseManager.connectionPromise;
     }
 
-    DatabaseManager.isConnecting = true;
+    DatabaseManager.connectionPromise = this.doConnect();
 
     try {
-      if (mongoose.connection.readyState === 1) {
-        logger.info("MongoDB already connected via mongoose");
-        DatabaseManager.isConnected = true;
-        DatabaseManager.isConnecting = false;
-        return;
-      }
-
-      const options = {
-        maxPoolSize: 10,
-        minPoolSize: 2,
-        serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 45000,
-        retryWrites: true,
-        retryReads: true,
-        bufferCommands: false,
-      };
-
-      await mongoose.connect(process.env.DB_MONGODB_URI!, options);
-
-      DatabaseManager.isConnected = true;
-      logger.info("Connected to MongoDB");
-    } catch (error) {
-      logger.error("MongoDB connection failed:", error);
-      DatabaseManager.isConnected = false;
-      throw error;
+      await DatabaseManager.connectionPromise;
     } finally {
-      DatabaseManager.isConnecting = false;
+      DatabaseManager.connectionPromise = null;
     }
   }
 
-  private async waitForConnection(maxWait: number = 10000): Promise<void> {
-    const startTime = Date.now();
-    while (DatabaseManager.isConnecting && Date.now() - startTime < maxWait) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
+  private async doConnect(): Promise<void> {
+    const options = {
+      maxPoolSize: 10,
+      minPoolSize: 2,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      retryWrites: true,
+      retryReads: true,
+      bufferCommands: false,
+    };
 
-    if (!DatabaseManager.isConnected) {
-      throw new Error("Database connection timeout");
+    try {
+      await retryWithBackoff(
+        async () => {
+          if (mongoose.connection.readyState === 1) {
+            logger.info("MongoDB already connected");
+            DatabaseManager.isConnected = true;
+            return;
+          }
+
+          await mongoose.connect(process.env.DB_MONGODB_URI!, options);
+          DatabaseManager.isConnected = true;
+          logger.info("Successfully connected to MongoDB");
+        },
+        {
+          maxAttempts: 5,
+          initialDelayMs: 2000,
+          maxDelayMs: 30000,
+          backoffMultiplier: 2,
+          shouldRetry: (error) => {
+            const dbError = handleMongooseError(error);
+            return (
+              dbError instanceof ConnectionError ||
+              dbError instanceof ConnectionTimeoutError
+            );
+          },
+          onRetry: (attempt, error, delayMs) => {
+            logger.warn(
+              `MongoDB connection attempt ${attempt} failed. Retrying in ${delayMs}ms`,
+              { error: error.message }
+            );
+          },
+        }
+      );
+    } catch (error) {
+      DatabaseManager.isConnected = false;
+      const dbError = handleMongooseError(error);
+      logger.error("MongoDB connection failed after all retries:", {
+        error: dbError.message,
+        code: dbError.code,
+      });
+      throw dbError;
     }
   }
 
@@ -95,8 +120,12 @@ export class DatabaseManager {
       DatabaseManager.isConnected = false;
       logger.info("Disconnected from MongoDB");
     } catch (error) {
-      logger.error("Error disconnecting from MongoDB:", error);
-      throw error;
+      const dbError = handleMongooseError(error);
+      logger.error("Error disconnecting from MongoDB:", {
+        error: dbError.message,
+        code: dbError.code,
+      });
+      throw dbError;
     }
   }
 
@@ -108,5 +137,22 @@ export class DatabaseManager {
     if (!this.isConnectionReady()) {
       await this.connect();
     }
+  }
+
+  getCacheStats() {
+    return {
+      guildMembers: this.guildMembers.getCacheStats(),
+      guilds: this.guilds.getCacheStats(),
+      users: this.users.getCacheStats(),
+      sessions: this.sessions.getCacheStats(),
+    };
+  }
+
+  cleanupAllCaches(): void {
+    this.guildMembers.cleanupCache();
+    this.guilds.cleanupCache();
+    this.users.cleanupCache();
+    this.sessions.cleanupCache();
+    logger.info("Cleaned up all repository caches");
   }
 }
