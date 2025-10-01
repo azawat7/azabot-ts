@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { UseAuthReturn, AuthState } from "@/app/lib/types";
+import { AuthState, UseAuthReturn } from "../lib/types";
 import { REFRESH_INTERVAL } from "../lib/config";
 
 export function useAuth(): UseAuthReturn {

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, ReactNode } from "react";
 import { useAuth } from "@/app/hooks/useAuth";
-import { UseAuthReturn } from "@/app/lib/types";
+import { UseAuthReturn } from "../lib/types";
 
 const AuthContext = createContext<UseAuthReturn | undefined>(undefined);
 
