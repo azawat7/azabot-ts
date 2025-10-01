@@ -65,10 +65,19 @@ export class ScheduledTasks {
         return;
       }
 
+      const stats = db.getCacheStats();
+      const cacheInfo = Object.entries(stats)
+        .map(([repo, stat]) => {
+          const { size, maxSize, utilizationPercent } = stat;
+          return `${repo}: ${size}/${maxSize} (${utilizationPercent.toFixed(
+            1
+          )}%)`;
+        })
+        .join(" | ");
+
       db.cleanupAllCaches();
 
-      const stats = db.getCacheStats();
-      logger.debug("Cache stats after cleanup:", stats);
+      logger.debug("Cache stats before cleanup:", cacheInfo);
     } catch (error) {
       logger.error("Error in scheduled cache cleanup:", error);
     }
