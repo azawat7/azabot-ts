@@ -81,6 +81,24 @@ export class SessionManager {
     }
   }
 
+  static async getSessionId() {
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
+
+    if (!sessionCookie) {
+      return null;
+    }
+
+    try {
+      const payload = await verifyJWT(sessionCookie.value);
+      if (!payload) {
+        await this.clearSessionCookie();
+        return null;
+      }
+      return payload.sessionId;
+    } catch (error) {}
+  }
+
   private static async refreshSession(
     session: any,
     user: any,

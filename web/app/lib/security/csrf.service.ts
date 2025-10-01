@@ -8,55 +8,104 @@ import {
   env,
 } from "../config";
 import crypto from "crypto";
+import { SessionManager } from "../auth";
 
-interface CSRFTokenPayload {
+interface CSRFTokenEntry {
   token: string;
-  timestamp: number;
+  createdAt: number;
+  sessionId: string;
 }
+
+class CSRFTokenStore {
+  private tokens = new Map<string, CSRFTokenEntry>();
+  private cleanupInterval: NodeJS.Timeout;
+
+  constructor() {
+    // Clean up expired tokens every 10 minutes
+    this.cleanupInterval = setInterval(() => {
+      this.cleanup();
+    }, 10 * 60 * 1000);
+  }
+
+  set(sessionId: string, token: string): void {
+    this.tokens.set(sessionId, {
+      token,
+      createdAt: Date.now(),
+      sessionId,
+    });
+  }
+
+  get(sessionId: string): CSRFTokenEntry | undefined {
+    return this.tokens.get(sessionId);
+  }
+
+  delete(sessionId: string): void {
+    this.tokens.delete(sessionId);
+  }
+
+  private cleanup(): void {
+    const now = Date.now();
+    let cleaned = 0;
+
+    for (const [sessionId, entry] of this.tokens.entries()) {
+      if (now - entry.createdAt > CSRF_TOKEN_EXPIRY) {
+        this.tokens.delete(sessionId);
+        cleaned++;
+      }
+    }
+
+    if (cleaned > 0) {
+      logger.debug(`Cleaned up ${cleaned} expired CSRF tokens`);
+    }
+  }
+
+  destroy(): void {
+    clearInterval(this.cleanupInterval);
+    this.tokens.clear();
+  }
+}
+
+const tokenStore = new CSRFTokenStore();
 
 export class CSRFService {
   static async generateToken(): Promise<string> {
+    const session = await SessionManager.getSession();
+
+    if (!session) {
+      throw new Error("No active session found");
+    }
+
     const token = randomBytes(CSRF_TOKEN_LENGTH).toString("hex");
-    const timestamp = Date.now();
 
-    const payload: CSRFTokenPayload = { token, timestamp };
-    const encodedPayload = Buffer.from(JSON.stringify(payload)).toString(
-      "base64"
-    );
-
-    const cookieStore = await cookies();
-    cookieStore.set(CSRF_TOKEN_NAME, encodedPayload, {
-      httpOnly: true,
-      secure: env.nodeEnv === "production",
-      sameSite: "strict",
-      maxAge: CSRF_TOKEN_EXPIRY,
-      path: "/",
-    });
+    tokenStore.set(session.sessionId, token);
 
     return token;
   }
 
   static async verifyToken(providedToken: string): Promise<boolean> {
     try {
-      const cookieStore = await cookies();
-      const csrfCookie = cookieStore.get(CSRF_TOKEN_NAME);
+      const session = await SessionManager.getSession();
 
-      if (!csrfCookie) {
-        logger.warn("CSRF verification failed: No CSRF cookie found");
+      if (!session) {
+        logger.warn("CSRF verification failed: No active session");
         return false;
       }
 
-      const payload: CSRFTokenPayload = JSON.parse(
-        Buffer.from(csrfCookie.value, "base64").toString()
-      );
+      const entry = tokenStore.get(session.sessionId);
+
+      if (!entry) {
+        logger.warn("CSRF verification failed: No token found for session");
+        return false;
+      }
 
       const now = Date.now();
-      if (now - payload.timestamp > CSRF_TOKEN_EXPIRY * 1000) {
+      if (now - entry.createdAt > CSRF_TOKEN_EXPIRY * 1000) {
         logger.warn("CSRF verification failed: Token expired");
+        tokenStore.delete(session.sessionId);
         return false;
       }
 
-      const isValid = this.timingSafeEqual(providedToken, payload.token);
+      const isValid = this.timingSafeEqual(providedToken, entry.token);
 
       if (!isValid) {
         logger.warn("CSRF verification failed: Token mismatch");
@@ -71,23 +120,25 @@ export class CSRFService {
 
   static async getToken(): Promise<string | null> {
     try {
-      const cookieStore = await cookies();
-      const csrfCookie = cookieStore.get(CSRF_TOKEN_NAME);
+      const session = await SessionManager.getSession();
 
-      if (!csrfCookie) {
+      if (!session) {
         return null;
       }
 
-      const payload: CSRFTokenPayload = JSON.parse(
-        Buffer.from(csrfCookie.value, "base64").toString()
-      );
+      const entry = tokenStore.get(session.sessionId);
+
+      if (!entry) {
+        return null;
+      }
 
       const now = Date.now();
-      if (now - payload.timestamp > CSRF_TOKEN_EXPIRY * 1000) {
+      if (now - entry.createdAt > CSRF_TOKEN_EXPIRY) {
+        tokenStore.delete(session.sessionId);
         return null;
       }
 
-      return payload.token;
+      return entry.token;
     } catch (error) {
       logger.error("Error getting CSRF token:", error);
       return null;
@@ -95,8 +146,15 @@ export class CSRFService {
   }
 
   static async clearToken(): Promise<void> {
-    const cookieStore = await cookies();
-    cookieStore.delete(CSRF_TOKEN_NAME);
+    try {
+      const session = await SessionManager.getSession();
+
+      if (session) {
+        tokenStore.delete(session.sessionId);
+      }
+    } catch (error) {
+      logger.error("Error clearing CSRF token:", error);
+    }
   }
 
   private static timingSafeEqual(a: string, b: string): boolean {
@@ -108,12 +166,6 @@ export class CSRFService {
     const bufA = Buffer.from(paddedA);
     const bufB = Buffer.from(paddedB);
 
-    const tokensMatch = crypto.timingSafeEqual(bufA, bufB);
-
-    const lengthA = a.length;
-    const lengthB = b.length;
-    const lengthsMatch = lengthA === lengthB;
-
-    return tokensMatch && lengthsMatch;
+    return crypto.timingSafeEqual(bufA, bufB);
   }
 }
