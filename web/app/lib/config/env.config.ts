@@ -28,9 +28,11 @@ function validateWebEnv(): WebEnvConfig {
   }
 
   if (missing.length > 0) {
-    logger.error("Missing required environment variables:");
-    missing.forEach((key) => logger.error(`- ${key.toUpperCase()}`));
-    logger.error("Please check your .env file");
+    const errorMessage = `Missing required environment variables:\n${missing
+      .map((key) => `- ${key.toUpperCase()}`)
+      .join("\n")}\nPlease check your .env file`;
+    logger.error(errorMessage);
+    throw new Error(errorMessage);
   }
 
   return required as WebEnvConfig;
