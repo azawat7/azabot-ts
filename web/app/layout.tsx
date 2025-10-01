@@ -3,7 +3,6 @@ import "./globals.css";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AppContent } from "./components/layout/AppContent";
 import { Inter } from "next/font/google";
-import { ScheduledTasks } from "@shaw/database";
 
 export const inter = Inter({
   subsets: ["latin"],

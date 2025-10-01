@@ -5,7 +5,9 @@ import {
   CSRF_TOKEN_EXPIRY,
   CSRF_TOKEN_LENGTH,
   CSRF_TOKEN_NAME,
+  env,
 } from "../config";
+import crypto from "crypto";
 
 interface CSRFTokenPayload {
   token: string;
@@ -25,7 +27,7 @@ export class CSRFService {
     const cookieStore = await cookies();
     cookieStore.set(CSRF_TOKEN_NAME, encodedPayload, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.nodeEnv === "production",
       sameSite: "strict",
       maxAge: CSRF_TOKEN_EXPIRY,
       path: "/",
@@ -98,18 +100,20 @@ export class CSRFService {
   }
 
   private static timingSafeEqual(a: string, b: string): boolean {
-    if (a.length !== b.length) {
-      return false;
-    }
+    const maxLength = CSRF_TOKEN_LENGTH * 4;
 
-    const bufA = Buffer.from(a);
-    const bufB = Buffer.from(b);
+    const paddedA = a.padEnd(maxLength, "\0");
+    const paddedB = b.padEnd(maxLength, "\0");
 
-    let result = 0;
-    for (let i = 0; i < bufA.length; i++) {
-      result |= bufA[i] ^ bufB[i];
-    }
+    const bufA = Buffer.from(paddedA);
+    const bufB = Buffer.from(paddedB);
 
-    return result === 0;
+    const tokensMatch = crypto.timingSafeEqual(bufA, bufB);
+
+    const lengthA = a.length;
+    const lengthB = b.length;
+    const lengthsMatch = lengthA === lengthB;
+
+    return tokensMatch && lengthsMatch;
   }
 }
