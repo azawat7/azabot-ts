@@ -10,6 +10,7 @@ import { BaseCommand, BaseEvent } from "@/base";
 import { DatabaseManager } from "@shaw/database";
 import { logger } from "@shaw/utils";
 import path from "path";
+import { env } from "@/config";
 
 export class CustomBaseClient extends Client {
   commands: Collection<String, BaseCommand>;
@@ -36,16 +37,16 @@ export class CustomBaseClient extends Client {
     await this.db.connect();
     await this.loadEvents();
     await this.loadCommands();
-    await this.login(process.env.BOT_TOKEN);
+    await this.login(env.token);
   }
 
   private getFileExtension(): string {
-    return process.env.NODE_ENV === "prod" ? "js" : "ts";
+    return env.nodeEnv === "production" ? "js" : "ts";
   }
 
   private async loadModule(fullPath: string): Promise<any> {
     try {
-      if (process.env.NODE_ENV !== "prod") {
+      if (env.nodeEnv !== "production") {
         delete require.cache[require.resolve(fullPath)];
       }
       const module = require(fullPath);
@@ -76,7 +77,7 @@ export class CustomBaseClient extends Client {
     }
 
     this.once("clientReady", async () => {
-      const guild = this.guilds.cache.get(process.env.BOT_GUILDID!)!;
+      const guild = this.guilds.cache.get(env.guildId)!;
       await guild.commands.set(slashCommands);
     });
 

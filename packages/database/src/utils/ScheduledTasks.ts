@@ -1,13 +1,14 @@
 import { logger } from "@shaw/utils";
 import { DatabaseManager } from "../DatabaseManager";
+import {
+  CACHE_CLEANUP_INTERVAL,
+  SESSION_CLEANUP_INTERVAL,
+  SESSION_DURATION,
+} from "../config";
 
 export class ScheduledTasks {
   private static cleanupInterval: NodeJS.Timeout | null = null;
   private static cacheCleanupInterval: NodeJS.Timeout | null = null;
-
-  private static readonly SESSION_CLEANUP_INTERVAL = 60 * 60 * 1000; // 1 hour
-
-  private static readonly CACHE_CLEANUP_INTERVAL = 10 * 60 * 1000; // 10 minutes
 
   static async startSessionCleanup(): Promise<void> {
     if (this.cleanupInterval) {
@@ -21,7 +22,7 @@ export class ScheduledTasks {
 
     this.cleanupInterval = setInterval(async () => {
       await this.cleanupExpiredSessions();
-    }, this.SESSION_CLEANUP_INTERVAL);
+    }, SESSION_CLEANUP_INTERVAL);
   }
 
   static async startCacheCleanup(): Promise<void> {
@@ -36,7 +37,7 @@ export class ScheduledTasks {
 
     this.cacheCleanupInterval = setInterval(async () => {
       await this.cleanupExpiredCaches();
-    }, this.CACHE_CLEANUP_INTERVAL);
+    }, CACHE_CLEANUP_INTERVAL);
   }
 
   private static async cleanupExpiredSessions(): Promise<void> {
@@ -44,7 +45,6 @@ export class ScheduledTasks {
       const db = DatabaseManager.getInstance();
       await db.ensureConnection();
 
-      const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
       const expiredDate = new Date(Date.now() - SESSION_DURATION);
       const result = await db.sessions.cleanupExpiredSessions(expiredDate);
 

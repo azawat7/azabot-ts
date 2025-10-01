@@ -1,10 +1,10 @@
 import { jwtVerify, SignJWT } from "jose";
 import { CustomJWTPayload, SessionUser } from "../types";
 import { logger } from "@shaw/utils";
+import { env, JWT_EXPIRATION } from "../config";
 
-const JWT_SECRET = new TextEncoder().encode(process.env.WEB_AUTH_SECRET!);
+const JWT_SECRET = new TextEncoder().encode(env.authSecret);
 const JWT_ALGORITHM = "HS256";
-const JWT_EXPIRATION = "7d";
 
 export async function signJWT(
   user: SessionUser,

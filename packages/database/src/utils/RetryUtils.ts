@@ -1,4 +1,5 @@
 import { logger } from "@shaw/utils";
+import { DEFAULT_RETRY_OPTIONS_VALUES } from "../config";
 
 export interface RetryOptions {
   maxAttempts?: number;
@@ -10,10 +11,7 @@ export interface RetryOptions {
 }
 
 const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
-  maxAttempts: 2,
-  initialDelayMs: 1000,
-  maxDelayMs: 30000,
-  backoffMultiplier: 2,
+  ...DEFAULT_RETRY_OPTIONS_VALUES,
   shouldRetry: () => true,
   onRetry: (attempt, error, delayMs) => {
     logger.warn(

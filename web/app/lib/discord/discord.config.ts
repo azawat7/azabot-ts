@@ -1,7 +1,9 @@
+import { env } from "../config";
+
 export const DISCORD_CONFIG = {
-  clientId: process.env.WEB_DISCORD_CLIENT_ID!,
-  clientSecret: process.env.WEB_DISCORD_CLIENT_SECRET!,
-  redirectUri: `${process.env.WEB_BASE_URL}/api/auth/callback`,
+  clientId: env.clientId,
+  clientSecret: env.clientSecret,
+  redirectUri: `${env.baseURL}/api/auth/callback`,
   scope: "identify guilds",
 
   authUrl: "https://discord.com/api/oauth2/authorize",

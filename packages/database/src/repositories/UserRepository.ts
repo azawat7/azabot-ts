@@ -5,10 +5,7 @@ import { User } from "../models/User";
 
 export class UserRepository extends BaseRepository<IUser> {
   constructor() {
-    super(User, {
-      ttl: 5 * 60 * 1000,
-      maxSize: 5000,
-    });
+    super(User);
   }
 
   async getOrCreate(userId: Snowflake): Promise<IUser> {

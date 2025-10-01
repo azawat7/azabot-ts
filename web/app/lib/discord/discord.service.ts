@@ -1,8 +1,7 @@
+import { TOKEN_EXPIRY_BUFFER } from "../config";
 import { DiscordTokenResponse, DiscordUser } from "../types";
 import { DISCORD_CONFIG } from "./";
 import { logger } from "@shaw/utils";
-
-const TOKEN_EXPIRY_BUFFER = 5 * 60 * 1000;
 
 export class DiscordService {
   private static async makeRequest(

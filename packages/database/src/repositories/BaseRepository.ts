@@ -3,11 +3,18 @@ import { CacheManager, CacheOptions } from "../utils/CacheManager";
 import { logger } from "@shaw/utils";
 import { handleMongooseError, isRetryableError } from "../utils/DatabaseErrors";
 import { retryWithBackoff } from "../utils/RetryUtils";
+import { CACHE_DEFAULTS, REPO_CACHE_SETTINGS, RepositoryName } from "../config";
 
 export abstract class BaseRepository<T extends Document> {
   protected cache: CacheManager<T>;
-  constructor(protected model: Model<T>, cacheOptions: CacheOptions) {
-    this.cache = new CacheManager<T>(cacheOptions);
+  constructor(protected model: Model<T>) {
+    const cacheSettings =
+      REPO_CACHE_SETTINGS[model.name as RepositoryName] || CACHE_DEFAULTS;
+
+    this.cache = new CacheManager<T>({
+      maxSize: cacheSettings.maxSize,
+      ttl: cacheSettings.ttl,
+    });
   }
 
   async create(data: Partial<T>): Promise<T> {

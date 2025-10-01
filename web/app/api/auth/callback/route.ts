@@ -3,6 +3,7 @@ import { DISCORD_CONFIG, DiscordService } from "@/app/lib/discord";
 import { SessionManager } from "@/app/lib/auth";
 import { SessionUser } from "@/app/lib/types";
 import { logger } from "@shaw/utils";
+import { STATE_COOKIE_NAME } from "@/app/lib/config";
 
 enum AuthError {
   ACCESS_DENIED = "access_denied",
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
     logger.warn("No authorization code received");
     return redirectWithError(request, AuthError.NO_CODE);
   }
-  const storedState = request.cookies.get("state")?.value;
+  const storedState = request.cookies.get(STATE_COOKIE_NAME)?.value;
   if (!storedState || storedState !== state) {
     logger.warn("State mismatch - possible CSRF attempt");
     return redirectWithError(request, AuthError.INVALID_STATE);
@@ -74,7 +75,7 @@ export async function GET(request: NextRequest) {
     await SessionManager.createSession(sessionUser, tokenData);
 
     const response = NextResponse.redirect(new URL("/", request.url));
-    response.cookies.delete("state");
+    response.cookies.delete(STATE_COOKIE_NAME);
 
     logger.info(
       `User ${userData.username} (${userData.id}) authenticated successfully`

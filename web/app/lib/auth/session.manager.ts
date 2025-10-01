@@ -5,9 +5,7 @@ import { DatabaseManager } from "@shaw/database";
 import { randomBytes } from "crypto";
 import { DiscordService } from "../discord";
 import { logger } from "@shaw/utils";
-
-const SESSION_COOKIE_NAME = "discord";
-const SESSION_DURATION = 7 * 24 * 60 * 60;
+import { env, SESSION_COOKIE_NAME, SESSION_DURATION } from "@/app/lib/config";
 
 export class SessionManager {
   private static db = DatabaseManager.getInstance();
@@ -49,7 +47,7 @@ export class SessionManager {
     const jwt = await signJWT(user, sessionId);
     cookieStore.set(SESSION_COOKIE_NAME, jwt, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.nodeEnv === "production",
       sameSite: "lax",
       maxAge: SESSION_DURATION,
       path: "/",
@@ -142,7 +140,7 @@ export class SessionManager {
         const newJWT = await signJWT(updatedUser, session.sessionId);
         cookieStore.set(SESSION_COOKIE_NAME, newJWT, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
+          secure: env.nodeEnv === "production",
           sameSite: "lax",
           maxAge: SESSION_DURATION,
           path: "/",

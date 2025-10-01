@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDiscordAuthUrl } from "@/app/lib/discord";
+import {
+  env,
+  STATE_COOKIE_DURATION,
+  STATE_COOKIE_NAME,
+} from "@/app/lib/config";
 
 export async function GET(request: NextRequest) {
   const state =
@@ -9,11 +14,11 @@ export async function GET(request: NextRequest) {
   const discordAuthUrl = getDiscordAuthUrl(state);
 
   const response = NextResponse.redirect(discordAuthUrl);
-  response.cookies.set("state", state, {
+  response.cookies.set(STATE_COOKIE_NAME, state, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: env.nodeEnv === "production",
     sameSite: "lax",
-    maxAge: 300,
+    maxAge: STATE_COOKIE_DURATION,
     path: "/",
   });
 

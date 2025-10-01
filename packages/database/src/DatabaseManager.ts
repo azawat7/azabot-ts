@@ -10,6 +10,7 @@ import {
   handleMongooseError,
 } from "./utils/DatabaseErrors";
 import { retryWithBackoff } from "./utils/RetryUtils";
+import { CONNECTION_OPTIONS, env } from "./config";
 
 export class DatabaseManager {
   private static instance: DatabaseManager | null = null;
@@ -60,16 +61,6 @@ export class DatabaseManager {
   private async doConnect(): Promise<void> {
     DatabaseManager.connectionLock = true;
 
-    const options = {
-      maxPoolSize: 10,
-      minPoolSize: 2,
-      serverSelectionTimeoutMS: 10000,
-      socketTimeoutMS: 45000,
-      retryWrites: true,
-      retryReads: true,
-      bufferCommands: false,
-    };
-
     try {
       await retryWithBackoff(
         async () => {
@@ -82,7 +73,7 @@ export class DatabaseManager {
             await mongoose.connection.close();
           }
 
-          await mongoose.connect(process.env.DB_MONGODB_URI!, options);
+          await mongoose.connect(env.mongodbUri, CONNECTION_OPTIONS);
           logger.info("Successfully connected to MongoDB");
         },
         {

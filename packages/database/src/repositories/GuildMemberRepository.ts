@@ -6,10 +6,7 @@ import { LevelUtils, logger } from "@shaw/utils";
 
 export class GuildMemberRepository extends BaseRepository<IGuildMember> {
   constructor() {
-    super(GuildMember, {
-      ttl: 5 * 60 * 1000,
-      maxSize: 5000,
-    });
+    super(GuildMember);
   }
 
   async getOrCreate(

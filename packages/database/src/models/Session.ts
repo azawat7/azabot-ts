@@ -1,5 +1,6 @@
 import { ISession } from "@shaw/types";
 import mongoose, { Schema } from "mongoose";
+import { SESSION_DURATION } from "../config";
 
 const SessionSchema = new Schema<ISession>(
   {
@@ -32,7 +33,10 @@ const SessionSchema = new Schema<ISession>(
   }
 );
 
-SessionSchema.index({ createdAt: 1 }, { expireAfterSeconds: 7 * 24 * 60 * 60 });
+SessionSchema.index(
+  { createdAt: 1 },
+  { expireAfterSeconds: SESSION_DURATION / 1000 }
+);
 
 export const Session =
   mongoose.models.Session || mongoose.model<ISession>("Session", SessionSchema);

@@ -1,6 +1,6 @@
 export interface CacheOptions {
-  ttl?: number;
-  maxSize?: number;
+  ttl: number;
+  maxSize: number;
 }
 
 export interface CacheEntry<T> {
@@ -15,9 +15,9 @@ export class CacheManager<T> {
   private defaultTTL: number;
   private maxSize: number;
 
-  constructor(options: CacheOptions = {}) {
-    this.defaultTTL = options.ttl || 5 * 60 * 1000;
-    this.maxSize = options.maxSize || 1000;
+  constructor(options: CacheOptions) {
+    this.defaultTTL = options.ttl;
+    this.maxSize = options.maxSize;
   }
 
   set(key: string, value: T, ttl?: number): void {

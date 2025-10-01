@@ -5,10 +5,7 @@ import { Guild } from "../models/Guild";
 
 export class GuildRepository extends BaseRepository<IGuild> {
   constructor() {
-    super(Guild, {
-      ttl: 10 * 60 * 1000,
-      maxSize: 5000,
-    });
+    super(Guild);
   }
 
   async getOrCreate(guildId: Snowflake): Promise<IGuild> {

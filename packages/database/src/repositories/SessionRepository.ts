@@ -5,10 +5,7 @@ import { BaseRepository } from "./BaseRepository";
 
 export class SessionRepository extends BaseRepository<ISession> {
   constructor() {
-    super(Session, {
-      ttl: 5 * 60 * 1000,
-      maxSize: 1000,
-    });
+    super(Session);
   }
 
   async createSession(

@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { UseAuthReturn, AuthState } from "@/app/lib/types";
-
-const REFRESH_INTERVAL = 5 * 60 * 1000;
+import { REFRESH_INTERVAL } from "../lib/config";
 
 export function useAuth(): UseAuthReturn {
   const [authState, setAuthState] = useState<AuthState>({
