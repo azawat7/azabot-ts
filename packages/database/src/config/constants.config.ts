@@ -40,7 +40,7 @@ export const REPO_CACHE_SETTINGS: Record<RepositoryName, CacheOptions> = {
 
 export const SESSION_CLEANUP_INTERVAL = 60 * 60 * 1000; // 1 hour in seconds
 export const CACHE_CLEANUP_INTERVAL = 10 * 60 * 1000; // 10 minutes in seconds
-export const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days in seconds
+export const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days in ms
 
 export const DEFAULT_RETRY_OPTIONS_VALUES = {
   maxAttempts: 2,
