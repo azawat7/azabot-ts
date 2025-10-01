@@ -15,60 +15,71 @@ export function useAuth(): UseAuthReturn {
 
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isRefreshingRef = useRef(false);
+  const fetchPromiseRef = useRef<Promise<void> | null>(null);
 
   const checkAuth = useCallback(async () => {
+    if (fetchPromiseRef.current) {
+      return fetchPromiseRef.current;
+    }
+
     if (isRefreshingRef.current) {
       return;
     }
     isRefreshingRef.current = true;
 
-    try {
-      setAuthState((prev) => ({ ...prev, loading: true, error: null }));
+    const fetchPromise = (async () => {
+      try {
+        setAuthState((prev) => ({ ...prev, loading: true, error: null }));
 
-      const response = await fetch("/api/auth/me", {
-        credentials: "include",
-        cache: "no-store",
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAuthState({
-          user: data.user,
-          loading: false,
-          error: null,
-          sessionId: data.sessionId,
-          hasValidDiscordToken: data.hasValidDiscordToken,
+        const response = await fetch("/api/auth/me", {
+          credentials: "include",
+          cache: "no-store",
         });
-      } else if (response.status === 401) {
+
+        if (response.ok) {
+          const data = await response.json();
+          setAuthState({
+            user: data.user,
+            loading: false,
+            error: null,
+            sessionId: data.sessionId,
+            hasValidDiscordToken: data.hasValidDiscordToken,
+          });
+        } else if (response.status === 401) {
+          setAuthState({
+            user: null,
+            loading: false,
+            error: null,
+            sessionId: null,
+            hasValidDiscordToken: false,
+          });
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          setAuthState({
+            user: null,
+            loading: false,
+            error: errorData.message || "Authentication failed",
+            sessionId: null,
+            hasValidDiscordToken: false,
+          });
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
         setAuthState({
           user: null,
           loading: false,
-          error: null,
+          error: "Network error",
           sessionId: null,
           hasValidDiscordToken: false,
         });
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        setAuthState({
-          user: null,
-          loading: false,
-          error: errorData.message || "Authentication failed",
-          sessionId: null,
-          hasValidDiscordToken: false,
-        });
+      } finally {
+        isRefreshingRef.current = false;
+        fetchPromiseRef.current = null;
       }
-    } catch (error) {
-      console.error("Auth check failed:", error);
-      setAuthState({
-        user: null,
-        loading: false,
-        error: "Network error",
-        sessionId: null,
-        hasValidDiscordToken: false,
-      });
-    } finally {
-      isRefreshingRef.current = false;
-    }
+    })();
+
+    fetchPromiseRef.current = fetchPromise;
+    return fetchPromise;
   }, []);
 
   const logout = useCallback(async () => {

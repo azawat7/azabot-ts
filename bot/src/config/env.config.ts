@@ -28,7 +28,6 @@ function validateBotEnv(): BotEnvConfig {
     logger.error("Missing required environment variables:");
     missing.forEach((key) => logger.error(`- ${key.toUpperCase()}`));
     logger.error("Please check your .env file");
-    process.exit(1);
   }
 
   return required as BotEnvConfig;

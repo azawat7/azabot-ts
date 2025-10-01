@@ -11,16 +11,6 @@ interface WebEnvConfig {
 }
 
 function validateWebEnv(): WebEnvConfig {
-  if (typeof window !== "undefined") {
-    return {
-      clientId: "",
-      clientSecret: "",
-      baseURL: "",
-      authSecret: "",
-      nodeEnv: "development",
-    };
-  }
-
   const required = {
     clientId: process.env.WEB_DISCORD_CLIENT_ID,
     clientSecret: process.env.WEB_DISCORD_CLIENT_SECRET,
@@ -41,7 +31,6 @@ function validateWebEnv(): WebEnvConfig {
     logger.error("Missing required environment variables:");
     missing.forEach((key) => logger.error(`- ${key.toUpperCase()}`));
     logger.error("Please check your .env file");
-    process.exit(1);
   }
 
   return required as WebEnvConfig;

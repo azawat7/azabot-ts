@@ -13,12 +13,6 @@ export const metadata: Metadata = {
   description: "web dashboard for azabot",
 };
 
-if (typeof window === "undefined") {
-  ScheduledTasks.startAll().catch((error) => {
-    console.error("Failed to start scheduled tasks:", error);
-  });
-}
-
 export default function RootLayout({
   children,
 }: Readonly<{

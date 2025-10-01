@@ -9,29 +9,12 @@ import { env, SESSION_COOKIE_NAME, SESSION_DURATION } from "@/app/lib/config";
 
 export class SessionManager {
   private static db = DatabaseManager.getInstance();
-  private static initPromise: Promise<void> | null = null;
-
-  private static async ensureConnection(): Promise<void> {
-    if (this.initPromise) {
-      return this.initPromise;
-    }
-
-    if (this.db.isConnectionReady()) {
-      return;
-    }
-
-    this.initPromise = this.db.connect().finally(() => {
-      this.initPromise = null;
-    });
-
-    return this.initPromise;
-  }
 
   static async createSession(
     user: SessionUser,
     tokenData: DiscordTokenResponse
   ): Promise<void> {
-    await this.ensureConnection();
+    await this.db.ensureConnection();
     const cookieStore = await cookies();
     const sessionId = randomBytes(32).toString("hex");
     const discordTokenExpiry = new Date(
@@ -59,7 +42,7 @@ export class SessionManager {
     discordAccessToken: string;
     sessionId: string;
   } | null> {
-    await this.ensureConnection();
+    await this.db.ensureConnection();
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
 
@@ -171,7 +154,7 @@ export class SessionManager {
   }
 
   static async clearSession(): Promise<void> {
-    await this.ensureConnection();
+    await this.db.ensureConnection();
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
 
@@ -196,7 +179,7 @@ export class SessionManager {
   }
 
   static async cleanupExpiredSessions(): Promise<void> {
-    await this.ensureConnection();
+    await this.db.ensureConnection();
 
     try {
       const expiredDate = new Date(Date.now() - SESSION_DURATION * 1000);
