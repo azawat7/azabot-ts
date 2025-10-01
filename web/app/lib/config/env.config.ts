@@ -11,6 +11,16 @@ interface WebEnvConfig {
 }
 
 function validateWebEnv(): WebEnvConfig {
+  if (typeof window !== "undefined") {
+    return {
+      clientId: "",
+      clientSecret: "",
+      baseURL: "",
+      authSecret: "",
+      nodeEnv: "development",
+    };
+  }
+
   const required = {
     clientId: process.env.WEB_DISCORD_CLIENT_ID,
     clientSecret: process.env.WEB_DISCORD_CLIENT_SECRET,
