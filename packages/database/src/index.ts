@@ -11,7 +11,8 @@ export * from "./repositories/GuildMemberRepository";
 export * from "./repositories/UserRepository";
 export * from "./repositories/SessionRepository";
 
-export * from "./utils/CacheManager";
+export * from "./cache/RedisCache";
+
 export * from "./utils/DatabaseErrors";
 export * from "./utils/RetryUtils";
 export * from "./utils/ScheduledTasks";

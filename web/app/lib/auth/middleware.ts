@@ -6,7 +6,7 @@ import { logger } from "@shaw/utils";
 type AuthHandler = (
   request: NextRequest,
   user: SessionUser,
-  discordToken: string,
+  discordAccessToken: string,
   sessionId: string
 ) => Promise<NextResponse>;
 

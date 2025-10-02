@@ -4,11 +4,13 @@ config({ quiet: true });
 
 interface DatabaseEnvConfig {
   mongodbUri: string;
+  redisUrl: string;
 }
 
 function validateDatabaseEnv(): DatabaseEnvConfig {
   const required = {
     mongodbUri: process.env.DB_MONGODB_URI,
+    redisUrl: process.env.DB_REDIS_URL,
   };
 
   const missing: string[] = [];

@@ -49,7 +49,6 @@ export class SessionManager {
     if (!sessionCookie) {
       return null;
     }
-
     try {
       const payload = await verifyJWT(sessionCookie.value);
       if (!payload) {
@@ -60,12 +59,18 @@ export class SessionManager {
       const session = await this.db.sessions.getSession(
         payload.sessionId as string
       );
+
       if (!session) {
         await this.clearSessionCookie();
         return null;
       }
-
-      if (DiscordService.isTokenExpired(session.discordTokenExpiry)) {
+      if (
+        DiscordService.isTokenExpired(
+          typeof session.discordTokenExpiry === "object"
+            ? session.discordTokenExpiry
+            : new Date(session.discordTokenExpiry)
+        )
+      ) {
         return await this.refreshSession(session, payload.user, cookieStore);
       }
 

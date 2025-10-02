@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { AuthState, UseAuthReturn } from "../lib/types";
-import { REFRESH_INTERVAL } from "../lib/config";
+import { REFRESH_INTERVAL } from "../lib/config/constants.config";
 
 export function useAuth(): UseAuthReturn {
   const [authState, setAuthState] = useState<AuthState>({

@@ -1,14 +1,9 @@
 import { logger } from "@shaw/utils";
 import { DatabaseManager } from "../DatabaseManager";
-import {
-  CACHE_CLEANUP_INTERVAL,
-  SESSION_CLEANUP_INTERVAL,
-  SESSION_DURATION,
-} from "../config";
+import { SESSION_CLEANUP_INTERVAL, SESSION_DURATION } from "../config";
 
 export class ScheduledTasks {
   private static cleanupInterval: NodeJS.Timeout | null = null;
-  private static cacheCleanupInterval: NodeJS.Timeout | null = null;
 
   static async startSessionCleanup(): Promise<void> {
     if (this.cleanupInterval) {
@@ -23,21 +18,6 @@ export class ScheduledTasks {
     this.cleanupInterval = setInterval(async () => {
       await this.cleanupExpiredSessions();
     }, SESSION_CLEANUP_INTERVAL);
-  }
-
-  static async startCacheCleanup(): Promise<void> {
-    if (this.cacheCleanupInterval) {
-      logger.warn("Cache cleanup task is already running");
-      return;
-    }
-
-    logger.info("Starting scheduled cache cleanup task");
-
-    await this.cleanupExpiredCaches();
-
-    this.cacheCleanupInterval = setInterval(async () => {
-      await this.cleanupExpiredCaches();
-    }, CACHE_CLEANUP_INTERVAL);
   }
 
   private static async cleanupExpiredSessions(): Promise<void> {
@@ -56,33 +36,6 @@ export class ScheduledTasks {
     }
   }
 
-  private static async cleanupExpiredCaches(): Promise<void> {
-    try {
-      const db = DatabaseManager.getInstance();
-
-      if (!db.isConnectionReady()) {
-        logger.debug("Database not ready, skipping cache cleanup");
-        return;
-      }
-
-      const stats = db.getCacheStats();
-      const cacheInfo = Object.entries(stats)
-        .map(([repo, stat]) => {
-          const { size, maxSize, utilizationPercent } = stat;
-          return `${repo}: ${size}/${maxSize} (${utilizationPercent.toFixed(
-            1
-          )}%)`;
-        })
-        .join(" | ");
-
-      db.cleanupAllCaches();
-
-      logger.debug("Cache stats before cleanup:", cacheInfo);
-    } catch (error) {
-      logger.error("Error in scheduled cache cleanup:", error);
-    }
-  }
-
   static stopSessionCleanup(): void {
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
@@ -91,20 +44,11 @@ export class ScheduledTasks {
     }
   }
 
-  static stopCacheCleanup(): void {
-    if (this.cacheCleanupInterval) {
-      clearInterval(this.cacheCleanupInterval);
-      this.cacheCleanupInterval = null;
-      logger.info("Cache cleanup task stopped");
-    }
-  }
-
   static stopAll(): void {
     this.stopSessionCleanup();
-    this.stopCacheCleanup();
   }
 
   static async startAll(): Promise<void> {
-    await Promise.all([this.startSessionCleanup(), this.startCacheCleanup()]);
+    await Promise.all([this.startSessionCleanup()]);
   }
 }

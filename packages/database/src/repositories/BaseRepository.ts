@@ -1,20 +1,28 @@
 import { Document, Model } from "mongoose";
-import { CacheManager, CacheOptions } from "../utils/CacheManager";
 import { logger } from "@shaw/utils";
 import { handleMongooseError, isRetryableError } from "../utils/DatabaseErrors";
 import { retryWithBackoff } from "../utils/RetryUtils";
-import { CACHE_DEFAULTS, REPO_CACHE_SETTINGS, RepositoryName } from "../config";
+import { REDIS_CACHE_TTL, RepositoryName } from "../config";
+import { RedisCache } from "../cache/RedisCache";
 
 export abstract class BaseRepository<T extends Document> {
-  protected cache: CacheManager<T>;
-  constructor(protected model: Model<T>) {
-    const cacheSettings =
-      REPO_CACHE_SETTINGS[model.name as RepositoryName] || CACHE_DEFAULTS;
+  protected cache: RedisCache | null = null;
+  protected cacheTTL: number;
+  protected cachePrefix: string;
 
-    this.cache = new CacheManager<T>({
-      maxSize: cacheSettings.maxSize,
-      ttl: cacheSettings.ttl,
-    });
+  constructor(protected model: Model<T>) {
+    this.cacheTTL = REDIS_CACHE_TTL[model.name as RepositoryName] || 300;
+    this.cachePrefix = `${model.name}`;
+  }
+
+  setCache(cache: RedisCache): void {
+    this.cache = cache;
+  }
+
+  protected getCacheKey(filter: Partial<T>, limit?: number): string {
+    const filterStr = JSON.stringify(filter, Object.keys(filter).sort());
+    const key = limit ? `${filterStr}:limit:${limit}` : filterStr;
+    return `${this.cachePrefix}${key}`;
   }
 
   async create(data: Partial<T>): Promise<T> {
@@ -26,8 +34,10 @@ export abstract class BaseRepository<T extends Document> {
         }
       );
 
-      const cacheKey = this.getCacheKey({ _id: result._id } as Partial<T>);
-      this.cache.set(cacheKey, result);
+      if (this.cache) {
+        const cacheKey = this.getCacheKey({ _id: result._id } as Partial<T>);
+        await this.cache.set(cacheKey, result, this.cacheTTL);
+      }
 
       return result;
     } catch (error) {
@@ -43,9 +53,10 @@ export abstract class BaseRepository<T extends Document> {
   async findById(id: string): Promise<T | null> {
     try {
       const cacheKey = this.getCacheKey({ _id: id } as Partial<T>);
-      const cached = this.cache.get(cacheKey);
-      if (cached) return cached;
-
+      if (this.cache) {
+        const cached = await this.cache.get<T>(cacheKey);
+        if (cached) return cached;
+      }
       const result = await retryWithBackoff(
         async () => await this.model.findById(id),
         {
@@ -53,8 +64,8 @@ export abstract class BaseRepository<T extends Document> {
         }
       );
 
-      if (result) {
-        this.cache.set(cacheKey, result);
+      if (result && this.cache) {
+        await this.cache.set(cacheKey, result, this.cacheTTL);
       }
 
       return result;
@@ -72,8 +83,11 @@ export abstract class BaseRepository<T extends Document> {
   async findOne(filter: Partial<T>): Promise<T | null> {
     try {
       const cacheKey = this.getCacheKey(filter);
-      const cached = this.cache.get(cacheKey);
-      if (cached) return cached;
+
+      if (this.cache) {
+        const cached = await this.cache.get<T>(cacheKey);
+        if (cached) return cached;
+      }
 
       const result = await retryWithBackoff(
         async () => await this.model.findOne(filter as any),
@@ -82,8 +96,8 @@ export abstract class BaseRepository<T extends Document> {
         }
       );
 
-      if (result) {
-        this.cache.set(cacheKey, result);
+      if (result && this.cache) {
+        await this.cache.set(cacheKey, result, this.cacheTTL);
       }
 
       return result;
@@ -101,8 +115,11 @@ export abstract class BaseRepository<T extends Document> {
   async find(filter: Partial<T> = {}, limit?: number): Promise<T[]> {
     try {
       const cacheKey = this.getCacheKey(filter, limit);
-      const cached = this.cache.get(cacheKey);
-      if (cached) return Array.isArray(cached) ? cached : [cached];
+
+      if (this.cache) {
+        const cached = await this.cache.get<T[]>(cacheKey);
+        if (cached) return cached;
+      }
 
       const query = this.model.find(filter as any);
       if (limit) query.limit(limit);
@@ -111,7 +128,9 @@ export abstract class BaseRepository<T extends Document> {
         shouldRetry: (error) => isRetryableError(handleMongooseError(error)),
       });
 
-      this.cache.set(cacheKey, results as any);
+      if (this.cache) {
+        await this.cache.set(cacheKey, results, this.cacheTTL);
+      }
       return results;
     } catch (error) {
       const dbError = handleMongooseError(error);
@@ -138,10 +157,10 @@ export abstract class BaseRepository<T extends Document> {
         }
       );
 
-      if (result) {
+      if (result && this.cache) {
         const cacheKey = this.getCacheKey({ _id: result._id } as Partial<T>);
-        this.cache.set(cacheKey, result);
-        this.invalidateRelatedCache(filter);
+        await this.cache.set(cacheKey, result, this.cacheTTL);
+        await this.invalidateRelatedCache(filter);
       }
 
       return result;
@@ -169,9 +188,11 @@ export abstract class BaseRepository<T extends Document> {
         }
       );
 
-      const cacheKey = this.getCacheKey({ _id: result._id } as Partial<T>);
-      this.cache.set(cacheKey, result);
-      this.invalidateRelatedCache(filter);
+      if (this.cache) {
+        const cacheKey = this.getCacheKey({ _id: result._id } as Partial<T>);
+        await this.cache.set(cacheKey, result, this.cacheTTL);
+        await this.invalidateRelatedCache(filter);
+      }
 
       return result;
     } catch (error) {
@@ -194,8 +215,8 @@ export abstract class BaseRepository<T extends Document> {
         }
       );
 
-      if (result.deletedCount > 0) {
-        this.invalidateRelatedCache(filter);
+      if (result.deletedCount > 0 && this.cache) {
+        await this.invalidateRelatedCache(filter);
       }
 
       return result.deletedCount > 0;
@@ -229,32 +250,11 @@ export abstract class BaseRepository<T extends Document> {
     }
   }
 
-  protected getCacheKey(filter: Partial<T>, limit?: number): string {
-    const filterStr = JSON.stringify(filter, Object.keys(filter).sort());
-    return limit ? `${filterStr}:limit:${limit}` : filterStr;
-  }
+  protected async invalidateRelatedCache(filter: Partial<T>): Promise<void> {
+    if (!this.cache) return;
 
-  protected invalidateRelatedCache(filter: Partial<T>): void {
-    const filterKeys = Object.keys(filter);
-
-    if (filterKeys.length === 0) {
-      this.cache.clear();
-      logger.debug(
-        `Cleared all cache for ${this.model.modelName} due to empty filter`
-      );
-      return;
-    }
-
-    const deleted = this.cache.deleteByPattern((cacheKey) => {
-      try {
-        const parsedKey = JSON.parse(cacheKey.split(":limit:")[0]);
-        const keyFields = Object.keys(parsedKey);
-
-        return filterKeys.some((filterKey) => keyFields.includes(filterKey));
-      } catch (e) {
-        return false;
-      }
-    });
+    const pattern = `${this.cachePrefix}*`;
+    const deleted = await this.cache.deleteByPattern(pattern);
 
     if (deleted > 0) {
       logger.debug(
@@ -263,22 +263,10 @@ export abstract class BaseRepository<T extends Document> {
     }
   }
 
-  clearCache(): void {
-    this.cache.clear();
+  async clearCache(): Promise<void> {
+    if (!this.cache) return;
+    const pattern = `${this.cachePrefix}*`;
+    await this.cache.deleteByPattern(pattern);
     logger.debug(`Cleared all cache for ${this.model.modelName}`);
-  }
-
-  cleanupCache(): void {
-    this.cache.cleanup();
-    logger.debug(
-      `Cleaned up expired cache entries for ${this.model.modelName}`
-    );
-  }
-
-  getCacheStats() {
-    return {
-      model: this.model.modelName,
-      ...this.cache.getStats(),
-    };
   }
 }

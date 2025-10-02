@@ -11,22 +11,29 @@ import {
 } from "./utils/DatabaseErrors";
 import { retryWithBackoff } from "./utils/RetryUtils";
 import { CONNECTION_OPTIONS, env } from "./config";
+import { RedisCache } from "./cache/RedisCache";
 
 export class DatabaseManager {
   private static instance: DatabaseManager | null = null;
-  private static connectionPromise: Promise<void> | null = null;
-  private static connectionLock = false;
 
   public guildMembers: GuildMemberRepository;
   public guilds: GuildRepository;
   public users: UserRepository;
   public sessions: SessionRepository;
+  public cache: RedisCache;
 
   constructor() {
+    this.cache = new RedisCache();
+
     this.guildMembers = new GuildMemberRepository();
     this.guilds = new GuildRepository();
     this.users = new UserRepository();
     this.sessions = new SessionRepository();
+
+    this.guildMembers.setCache(this.cache);
+    this.guilds.setCache(this.cache);
+    this.users.setCache(this.cache);
+    this.sessions.setCache(this.cache);
   }
 
   static getInstance(): DatabaseManager {
@@ -37,29 +44,14 @@ export class DatabaseManager {
   }
 
   async connect(): Promise<void> {
-    if (
-      !DatabaseManager.connectionLock &&
-      mongoose.connection.readyState === 1
-    ) {
-      logger.debug("Database already connected");
-      return;
-    }
-    if (DatabaseManager.connectionPromise) {
-      logger.debug("Database connection already in progress");
-      return DatabaseManager.connectionPromise;
-    }
-
-    DatabaseManager.connectionPromise = this.doConnect();
-
-    try {
-      await DatabaseManager.connectionPromise;
-    } finally {
-      DatabaseManager.connectionPromise = null;
-    }
+    await Promise.all([this.connectMongoDB(), this.connectRedis()]);
   }
 
-  private async doConnect(): Promise<void> {
-    DatabaseManager.connectionLock = true;
+  private async connectMongoDB(): Promise<void> {
+    if (mongoose.connection.readyState === 1) {
+      logger.debug("MongoDB already connected");
+      return;
+    }
 
     try {
       await retryWithBackoff(
@@ -103,54 +95,68 @@ export class DatabaseManager {
         code: dbError.code,
       });
       throw dbError;
-    } finally {
-      DatabaseManager.connectionLock = false;
     }
+  }
+
+  async connectRedis(): Promise<void> {
+    await this.cache.connect();
   }
 
   async disconnect(): Promise<void> {
-    if (mongoose.connection.readyState === 0) {
-      logger.debug("Database not connected, skipping disconnect");
-      return;
-    }
+    await Promise.all([this.disconnectMongoDB(), this.disconnectRedis()]);
+  }
 
-    try {
-      await mongoose.disconnect();
-      logger.info("Disconnected from MongoDB");
-    } catch (error) {
-      const dbError = handleMongooseError(error);
-      logger.error("Error disconnecting from MongoDB:", {
-        error: dbError.message,
-        code: dbError.code,
-      });
-      throw dbError;
+  async disconnectMongoDB(): Promise<void> {
+    if (mongoose.connection.readyState !== 0) {
+      try {
+        await mongoose.disconnect();
+        logger.info("Disconnected from MongoDB");
+      } catch (error) {
+        const dbError = handleMongooseError(error);
+        logger.error("Error disconnecting from MongoDB:", {
+          error: dbError.message,
+          code: dbError.code,
+        });
+      }
     }
   }
 
-  isConnectionReady(): boolean {
+  async disconnectRedis(): Promise<void> {
+    await this.cache.disconnect();
+  }
+
+  isMongoDBReady(): boolean {
     return mongoose.connection.readyState === 1;
   }
 
+  isRedisReady(): boolean {
+    return this.cache.isConnected();
+  }
+
+  isConnectionReady(): boolean {
+    return this.isMongoDBReady() && this.isRedisReady();
+  }
+
   async ensureConnection(): Promise<void> {
-    if (!this.isConnectionReady()) {
+    const mongoReady = this.isMongoDBReady();
+    const redisReady = this.isRedisReady();
+
+    if (!mongoReady && !redisReady) {
       await this.connect();
+    } else if (!mongoReady) {
+      await this.connectMongoDB();
+    } else if (!redisReady) {
+      await this.connectRedis();
     }
   }
 
-  getCacheStats() {
-    return {
-      guildMembers: this.guildMembers.getCacheStats(),
-      guilds: this.guilds.getCacheStats(),
-      users: this.users.getCacheStats(),
-      sessions: this.sessions.getCacheStats(),
-    };
-  }
-
-  cleanupAllCaches(): void {
-    this.guildMembers.cleanupCache();
-    this.guilds.cleanupCache();
-    this.users.cleanupCache();
-    this.sessions.cleanupCache();
+  async cleanupAllCaches(): Promise<void> {
+    await Promise.all([
+      this.guildMembers.clearCache(),
+      this.guilds.clearCache(),
+      this.users.clearCache(),
+      this.sessions.clearCache(),
+    ]);
     logger.info("Cleaned up all repository caches");
   }
 }
