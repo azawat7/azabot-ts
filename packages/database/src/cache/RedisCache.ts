@@ -21,6 +21,18 @@ export class RedisCache {
         logger.error("Redis Client Error:", err);
       });
 
+      this.client.on("ready", () => {
+        logger.info("Redis client is ready");
+      });
+
+      this.client.on("reconnecting", () => {
+        logger.warn("Redis client is reconnecting...");
+      });
+
+      this.client.on("end", () => {
+        logger.warn("Redis connection closed");
+      });
+
       await this.client.connect();
       logger.info("Successfully connected to Redis");
     } catch (error) {
