@@ -2,11 +2,6 @@ import { logger } from "@shaw/utils";
 import { RATE_LIMIT_CONFIGS } from "../config";
 import { DatabaseManager } from "@shaw/database";
 
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
-
 interface RateLimitConfig {
   windowMs: number;
   maxRequests: number;
@@ -30,44 +25,33 @@ export class RateLimiter {
     resetAt: number;
   }> {
     await this.db.ensureConnection();
+
     const now = Date.now();
     const key = this.getCacheKey(identifier);
+    const ttlSeconds = Math.ceil(this.config.windowMs / 1000);
 
     try {
-      const entry = await this.db.cache.get<RateLimitEntry>(key);
-      if (!entry || now >= entry.resetAt) {
-        const newEntry: RateLimitEntry = {
-          count: 1,
-          resetAt: now + this.config.windowMs,
-        };
+      const client = (this.db.cache as any).client;
 
-        const ttlSeconds = Math.ceil(this.config.windowMs / 1000);
-        await this.db.cache.set(key, newEntry, ttlSeconds);
-
-        return {
-          allowed: true,
-          remaining: this.config.maxRequests - 1,
-          resetAt: newEntry.resetAt,
-        };
+      const count = await client.incr(key);
+      if (count === 1) {
+        await client.expire(key, ttlSeconds);
       }
 
-      if (entry.count < this.config.maxRequests) {
-        entry.count++;
-        const ttlSeconds = Math.ceil((entry.resetAt - now) / 1000);
-        await this.db.cache.set(key, entry, ttlSeconds);
+      const resetAt = now + this.config.windowMs;
+      const remaining = Math.max(0, this.config.maxRequests - count);
+      const allowed = count <= this.config.maxRequests;
 
-        return {
-          allowed: true,
-          remaining: this.config.maxRequests - entry.count,
-          resetAt: entry.resetAt,
-        };
+      if (!allowed) {
+        logger.warn(
+          `Rate limit exceeded for identifier: ${identifier} (${count}/${this.config.maxRequests})`
+        );
       }
-      logger.warn(`Rate limit exceeded for identifier: ${identifier}`);
 
       return {
-        allowed: false,
-        remaining: 0,
-        resetAt: entry.resetAt,
+        allowed,
+        remaining,
+        resetAt,
       };
     } catch (error) {
       logger.error(`Rate limit check error for ${identifier}:`, error);
