@@ -72,7 +72,7 @@ export class RateLimiter {
     } catch (error) {
       logger.error(`Rate limit check error for ${identifier}:`, error);
       return {
-        allowed: true,
+        allowed: false,
         remaining: this.config.maxRequests,
         resetAt: now + this.config.windowMs,
       };

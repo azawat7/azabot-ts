@@ -19,11 +19,12 @@ export class CSRFService {
     return `${this.CSRF_PREFIX}${sessionId}`;
   }
 
-  static async generateToken(): Promise<string> {
+  static async generateToken(): Promise<string | null> {
     const session = await SessionManager.getSession();
 
     if (!session) {
-      throw new Error("No active session found");
+      logger.warn("CSRF verification failed: No active session");
+      return null;
     }
 
     const token = randomBytes(CSRF_TOKEN_LENGTH).toString("hex");
@@ -40,7 +41,7 @@ export class CSRFService {
       return token;
     } catch (error) {
       logger.error("Failed to store CSRF token:", error);
-      throw new Error("Failed to generate CSRF token");
+      return null;
     }
   }
 
@@ -126,7 +127,7 @@ export class CSRFService {
   }
 
   private static timingSafeEqual(a: string, b: string): boolean {
-    const maxLength = CSRF_TOKEN_LENGTH * 4;
+    const maxLength = CSRF_TOKEN_LENGTH * 2;
 
     const paddedA = a.padEnd(maxLength, "\0");
     const paddedB = b.padEnd(maxLength, "\0");
