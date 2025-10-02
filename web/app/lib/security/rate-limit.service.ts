@@ -1,5 +1,6 @@
 import { logger } from "@shaw/utils";
 import { RATE_LIMIT_CONFIGS } from "../config";
+import { DatabaseManager } from "@shaw/database";
 
 interface RateLimitEntry {
   count: number;
@@ -12,13 +13,15 @@ interface RateLimitConfig {
 }
 
 export class RateLimiter {
-  private store = new Map<string, RateLimitEntry>();
-  private cleanupInterval: NodeJS.Timeout | null = null;
+  private db = DatabaseManager.getInstance();
+  private readonly RATELIMIT_PREFIX: string;
 
-  constructor(private config: RateLimitConfig) {
-    this.cleanupInterval = setInterval(() => {
-      this.cleanup();
-    }, 60 * 1000);
+  constructor(private config: RateLimitConfig, tier: string) {
+    this.RATELIMIT_PREFIX = `rateLimit:${tier}:`;
+  }
+
+  private getCacheKey(identifier: string): string {
+    return `${this.RATELIMIT_PREFIX}${identifier}`;
   }
 
   async check(identifier: string): Promise<{
@@ -26,79 +29,97 @@ export class RateLimiter {
     remaining: number;
     resetAt: number;
   }> {
+    await this.db.ensureConnection();
     const now = Date.now();
-    const entry = this.store.get(identifier);
+    const key = this.getCacheKey(identifier);
 
-    if (!entry || now >= entry.resetAt) {
-      const newEntry: RateLimitEntry = {
-        count: 1,
-        resetAt: now + this.config.windowMs,
-      };
-      this.store.set(identifier, newEntry);
+    try {
+      const entry = await this.db.cache.get<RateLimitEntry>(key);
+      if (!entry || now >= entry.resetAt) {
+        const newEntry: RateLimitEntry = {
+          count: 1,
+          resetAt: now + this.config.windowMs,
+        };
+
+        const ttlSeconds = Math.ceil(this.config.windowMs / 1000);
+        await this.db.cache.set(key, newEntry, ttlSeconds);
+
+        return {
+          allowed: true,
+          remaining: this.config.maxRequests - 1,
+          resetAt: newEntry.resetAt,
+        };
+      }
+
+      if (entry.count < this.config.maxRequests) {
+        entry.count++;
+        const ttlSeconds = Math.ceil((entry.resetAt - now) / 1000);
+        await this.db.cache.set(key, entry, ttlSeconds);
+
+        return {
+          allowed: true,
+          remaining: this.config.maxRequests - entry.count,
+          resetAt: entry.resetAt,
+        };
+      }
+      logger.warn(`Rate limit exceeded for identifier: ${identifier}`);
 
       return {
-        allowed: true,
-        remaining: this.config.maxRequests - 1,
-        resetAt: newEntry.resetAt,
-      };
-    }
-
-    if (entry.count < this.config.maxRequests) {
-      entry.count++;
-      this.store.set(identifier, entry);
-
-      return {
-        allowed: true,
-        remaining: this.config.maxRequests - entry.count,
+        allowed: false,
+        remaining: 0,
         resetAt: entry.resetAt,
       };
+    } catch (error) {
+      logger.error(`Rate limit check error for ${identifier}:`, error);
+      return {
+        allowed: true,
+        remaining: this.config.maxRequests,
+        resetAt: now + this.config.windowMs,
+      };
     }
-    logger.warn(`Rate limit exceeded for identifier: ${identifier}`);
-
-    return {
-      allowed: false,
-      remaining: 0,
-      resetAt: entry.resetAt,
-    };
   }
 
-  private cleanup(): void {
-    const now = Date.now();
-    let cleaned = 0;
+  async reset(identifier: string): Promise<void> {
+    await this.db.ensureConnection();
 
-    for (const [key, entry] of this.store.entries()) {
-      if (now >= entry.resetAt) {
-        this.store.delete(key);
-        cleaned++;
+    try {
+      const key = this.getCacheKey(identifier);
+      await this.db.cache.delete(key);
+      logger.debug(`Reset rate limit for identifier: ${identifier}`);
+    } catch (error) {
+      logger.error(`Error resetting rate limit for ${identifier}:`, error);
+    }
+  }
+
+  async cleanup(): Promise<void> {
+    await this.db.ensureConnection();
+
+    try {
+      const pattern = `${this.RATELIMIT_PREFIX}*`;
+      const deletedCount = await this.db.cache.deleteByPattern(pattern);
+
+      if (deletedCount > 0) {
+        logger.info(`Cleaned up ${deletedCount} rate limit entries`);
       }
-    }
-
-    if (cleaned > 0) {
-      logger.debug(`Cleaned up ${cleaned} expired rate limit entries`);
+    } catch (error) {
+      logger.error(`Error cleaning up rate limit entries`, error);
     }
   }
 
-  destroy(): void {
-    if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval);
-      this.cleanupInterval = null;
-    }
-    this.store.clear();
-  }
-
-  getStats(): { totalEntries: number; config: RateLimitConfig } {
+  getStats(): {
+    config: RateLimitConfig;
+  } {
     return {
-      totalEntries: this.store.size,
       config: this.config,
     };
   }
 }
 
 const rateLimiters = {
-  strict: new RateLimiter(RATE_LIMIT_CONFIGS.strict),
-  moderate: new RateLimiter(RATE_LIMIT_CONFIGS.moderate),
-  relaxed: new RateLimiter(RATE_LIMIT_CONFIGS.relaxed),
-  auth: new RateLimiter(RATE_LIMIT_CONFIGS.auth),
+  strict: new RateLimiter(RATE_LIMIT_CONFIGS.strict, "strict"),
+  moderate: new RateLimiter(RATE_LIMIT_CONFIGS.moderate, "moderate"),
+  relaxed: new RateLimiter(RATE_LIMIT_CONFIGS.relaxed, "relaxed"),
+  auth: new RateLimiter(RATE_LIMIT_CONFIGS.auth, "auth"),
 };
 
 export function getRateLimiter(

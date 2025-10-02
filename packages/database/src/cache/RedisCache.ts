@@ -3,17 +3,9 @@ import { logger } from "@shaw/utils";
 import { env } from "../config";
 
 export class RedisCache {
-  private static instance: RedisCache | null = null;
   private client: RedisClientType | null = null;
 
   constructor() {}
-
-  static getInstance(): RedisCache {
-    if (!RedisCache.instance) {
-      RedisCache.instance = new RedisCache();
-    }
-    return RedisCache.instance;
-  }
 
   async connect(): Promise<void> {
     if (this.client?.isReady) {

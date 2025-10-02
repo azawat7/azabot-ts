@@ -11,8 +11,8 @@ export abstract class BaseRepository<T extends Document> {
   protected cachePrefix: string;
 
   constructor(protected model: Model<T>) {
-    this.cacheTTL = REDIS_CACHE_TTL[model.name as RepositoryName] || 300;
-    this.cachePrefix = `${model.name}`;
+    this.cacheTTL = REDIS_CACHE_TTL[model.modelName as RepositoryName] || 300;
+    this.cachePrefix = `${model.modelName}:`;
   }
 
   setCache(cache: RedisCache): void {
@@ -251,6 +251,7 @@ export abstract class BaseRepository<T extends Document> {
   }
 
   protected async invalidateRelatedCache(filter: Partial<T>): Promise<void> {
+    // TODO FIX
     if (!this.cache) return;
 
     const pattern = `${this.cachePrefix}*`;

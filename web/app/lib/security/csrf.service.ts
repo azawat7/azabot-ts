@@ -9,65 +9,16 @@ import {
 } from "../config";
 import crypto from "crypto";
 import { SessionManager } from "../auth";
-
-interface CSRFTokenEntry {
-  token: string;
-  createdAt: number;
-  sessionId: string;
-}
-
-class CSRFTokenStore {
-  private tokens = new Map<string, CSRFTokenEntry>();
-  private cleanupInterval: NodeJS.Timeout;
-
-  constructor() {
-    // Clean up expired tokens every 10 minutes
-    this.cleanupInterval = setInterval(() => {
-      this.cleanup();
-    }, 10 * 60 * 1000);
-  }
-
-  set(sessionId: string, token: string): void {
-    this.tokens.set(sessionId, {
-      token,
-      createdAt: Date.now(),
-      sessionId,
-    });
-  }
-
-  get(sessionId: string): CSRFTokenEntry | undefined {
-    return this.tokens.get(sessionId);
-  }
-
-  delete(sessionId: string): void {
-    this.tokens.delete(sessionId);
-  }
-
-  private cleanup(): void {
-    const now = Date.now();
-    let cleaned = 0;
-
-    for (const [sessionId, entry] of this.tokens.entries()) {
-      if (now - entry.createdAt > CSRF_TOKEN_EXPIRY) {
-        this.tokens.delete(sessionId);
-        cleaned++;
-      }
-    }
-
-    if (cleaned > 0) {
-      logger.debug(`Cleaned up ${cleaned} expired CSRF tokens`);
-    }
-  }
-
-  destroy(): void {
-    clearInterval(this.cleanupInterval);
-    this.tokens.clear();
-  }
-}
-
-const tokenStore = new CSRFTokenStore();
+import { DatabaseManager } from "@shaw/database";
 
 export class CSRFService {
+  private static readonly CSRF_PREFIX = "csrf:";
+  private static db = DatabaseManager.getInstance();
+
+  private static getCacheKey(sessionId: string): string {
+    return `${this.CSRF_PREFIX}${sessionId}`;
+  }
+
   static async generateToken(): Promise<string> {
     const session = await SessionManager.getSession();
 
@@ -77,9 +28,20 @@ export class CSRFService {
 
     const token = randomBytes(CSRF_TOKEN_LENGTH).toString("hex");
 
-    tokenStore.set(session.sessionId, token);
+    try {
+      const key = this.getCacheKey(session.sessionId);
+      await this.db.cache.set(
+        key,
+        { token, createdAt: Date.now() },
+        CSRF_TOKEN_EXPIRY
+      );
 
-    return token;
+      logger.debug(`Generated CSRF token for session ${session.sessionId}`);
+      return token;
+    } catch (error) {
+      logger.error("Failed to store CSRF token:", error);
+      throw new Error("Failed to generate CSRF token");
+    }
   }
 
   static async verifyToken(providedToken: string): Promise<boolean> {
@@ -91,7 +53,11 @@ export class CSRFService {
         return false;
       }
 
-      const entry = tokenStore.get(session.sessionId);
+      const key = this.getCacheKey(session.sessionId);
+      const entry = await this.db.cache.get<{
+        token: string;
+        createdAt: number;
+      }>(key);
 
       if (!entry) {
         logger.warn("CSRF verification failed: No token found for session");
@@ -101,7 +67,7 @@ export class CSRFService {
       const now = Date.now();
       if (now - entry.createdAt > CSRF_TOKEN_EXPIRY * 1000) {
         logger.warn("CSRF verification failed: Token expired");
-        tokenStore.delete(session.sessionId);
+        await this.db.cache.delete(key);
         return false;
       }
 
@@ -126,15 +92,19 @@ export class CSRFService {
         return null;
       }
 
-      const entry = tokenStore.get(session.sessionId);
+      const key = this.getCacheKey(session.sessionId);
+      const entry = await this.db.cache.get<{
+        token: string;
+        createdAt: number;
+      }>(key);
 
       if (!entry) {
         return null;
       }
 
       const now = Date.now();
-      if (now - entry.createdAt > CSRF_TOKEN_EXPIRY) {
-        tokenStore.delete(session.sessionId);
+      if (now - entry.createdAt > CSRF_TOKEN_EXPIRY * 1000) {
+        await this.db.cache.delete(key);
         return null;
       }
 
@@ -145,13 +115,11 @@ export class CSRFService {
     }
   }
 
-  static async clearToken(): Promise<void> {
+  static async clearToken(sessionId: string): Promise<void> {
     try {
-      const session = await SessionManager.getSession();
-
-      if (session) {
-        tokenStore.delete(session.sessionId);
-      }
+      const key = this.getCacheKey(sessionId);
+      await this.db.cache.delete(key);
+      logger.debug(`Cleared CSRF token for session ${sessionId}`);
     } catch (error) {
       logger.error("Error clearing CSRF token:", error);
     }
@@ -167,5 +135,19 @@ export class CSRFService {
     const bufB = Buffer.from(paddedB);
 
     return crypto.timingSafeEqual(bufA, bufB);
+  }
+
+  static async cleanup(): Promise<void> {
+    try {
+      await this.db.ensureConnection();
+      const pattern = `${this.CSRF_PREFIX}*`;
+      const deletedCount = await this.db.cache.deleteByPattern(pattern);
+
+      if (deletedCount > 0) {
+        logger.info(`Cleaned up ${deletedCount} CSRF tokens`);
+      }
+    } catch (error) {
+      logger.error("Error cleaning up CSRF tokens:", error);
+    }
   }
 }

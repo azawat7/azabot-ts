@@ -6,6 +6,7 @@ import { randomBytes } from "crypto";
 import { DiscordService } from "../discord";
 import { logger } from "@shaw/utils";
 import { env, SESSION_COOKIE_NAME, SESSION_DURATION } from "@/app/lib/config";
+import { CSRFService } from "../security";
 
 export class SessionManager {
   private static db = DatabaseManager.getInstance();
@@ -190,6 +191,7 @@ export class SessionManager {
           );
           if (session) {
             await DiscordService.revokeToken(session.discordAccessToken);
+            await CSRFService.clearToken(session.sessionId);
             await this.db.sessions.deleteSession(session.sessionId);
           }
         }
