@@ -10,6 +10,8 @@ export abstract class BaseRepository<T extends Document> {
   protected cacheTTL: number;
   protected cachePrefix: string;
 
+  protected abstract getEntityKey(entity: Partial<T>): string | null;
+
   constructor(protected model: Model<T>) {
     this.cacheTTL = REDIS_CACHE_TTL[model.modelName as RepositoryName] || 300;
     this.cachePrefix = `${model.modelName}:`;
@@ -19,10 +21,31 @@ export abstract class BaseRepository<T extends Document> {
     this.cache = cache;
   }
 
-  protected getCacheKey(filter: Partial<T>, limit?: number): string {
-    const filterStr = JSON.stringify(filter, Object.keys(filter).sort());
-    const key = limit ? `${filterStr}:limit:${limit}` : filterStr;
+  protected getCacheKey(key: string): string {
     return `${this.cachePrefix}${key}`;
+  }
+
+  protected getCacheKeyFromEntity(entity: Partial<T>): string | null {
+    const entityKey = this.getEntityKey(entity);
+    return entityKey ? this.getCacheKey(entityKey) : null;
+  }
+
+  protected async cacheEntity(entity: T): Promise<void> {
+    if (!this.cache) return;
+
+    const cacheKey = this.getCacheKeyFromEntity(entity);
+    if (cacheKey) {
+      await this.cache.set(cacheKey, entity, this.cacheTTL);
+    }
+  }
+
+  protected async invalidateEntity(entity: Partial<T>): Promise<void> {
+    if (!this.cache) return;
+
+    const cacheKey = this.getCacheKeyFromEntity(entity);
+    if (cacheKey) {
+      await this.cache.delete(cacheKey);
+    }
   }
 
   async create(data: Partial<T>): Promise<T> {
@@ -34,11 +57,7 @@ export abstract class BaseRepository<T extends Document> {
         }
       );
 
-      if (this.cache) {
-        const cacheKey = this.getCacheKey({ _id: result._id } as Partial<T>);
-        await this.cache.set(cacheKey, result, this.cacheTTL);
-      }
-
+      await this.cacheEntity(result);
       return result;
     } catch (error) {
       const dbError = handleMongooseError(error);
@@ -52,7 +71,7 @@ export abstract class BaseRepository<T extends Document> {
 
   async findById(id: string): Promise<T | null> {
     try {
-      const cacheKey = this.getCacheKey({ _id: id } as Partial<T>);
+      const cacheKey = this.getCacheKey(id);
       if (this.cache) {
         const cached = await this.cache.get<T>(cacheKey);
         if (cached) return cached;
@@ -64,8 +83,8 @@ export abstract class BaseRepository<T extends Document> {
         }
       );
 
-      if (result && this.cache) {
-        await this.cache.set(cacheKey, result, this.cacheTTL);
+      if (result) {
+        await this.cacheEntity(result);
       }
 
       return result;
@@ -82,9 +101,9 @@ export abstract class BaseRepository<T extends Document> {
 
   async findOne(filter: Partial<T>): Promise<T | null> {
     try {
-      const cacheKey = this.getCacheKey(filter);
+      const cacheKey = this.getCacheKeyFromEntity(filter);
 
-      if (this.cache) {
+      if (cacheKey && this.cache) {
         const cached = await this.cache.get<T>(cacheKey);
         if (cached) return cached;
       }
@@ -96,8 +115,8 @@ export abstract class BaseRepository<T extends Document> {
         }
       );
 
-      if (result && this.cache) {
-        await this.cache.set(cacheKey, result, this.cacheTTL);
+      if (result) {
+        await this.cacheEntity(result);
       }
 
       return result;
@@ -114,13 +133,6 @@ export abstract class BaseRepository<T extends Document> {
 
   async find(filter: Partial<T> = {}, limit?: number): Promise<T[]> {
     try {
-      const cacheKey = this.getCacheKey(filter, limit);
-
-      if (this.cache) {
-        const cached = await this.cache.get<T[]>(cacheKey);
-        if (cached) return cached;
-      }
-
       const query = this.model.find(filter as any);
       if (limit) query.limit(limit);
 
@@ -128,9 +140,6 @@ export abstract class BaseRepository<T extends Document> {
         shouldRetry: (error) => isRetryableError(handleMongooseError(error)),
       });
 
-      if (this.cache) {
-        await this.cache.set(cacheKey, results, this.cacheTTL);
-      }
       return results;
     } catch (error) {
       const dbError = handleMongooseError(error);
@@ -157,10 +166,9 @@ export abstract class BaseRepository<T extends Document> {
         }
       );
 
-      if (result && this.cache) {
-        const cacheKey = this.getCacheKey({ _id: result._id } as Partial<T>);
-        await this.cache.set(cacheKey, result, this.cacheTTL);
-        await this.invalidateRelatedCache(filter);
+      if (result) {
+        await this.invalidateEntity(filter);
+        await this.cacheEntity(result);
       }
 
       return result;
@@ -188,11 +196,8 @@ export abstract class BaseRepository<T extends Document> {
         }
       );
 
-      if (this.cache) {
-        const cacheKey = this.getCacheKey({ _id: result._id } as Partial<T>);
-        await this.cache.set(cacheKey, result, this.cacheTTL);
-        await this.invalidateRelatedCache(filter);
-      }
+      await this.invalidateEntity(filter);
+      await this.cacheEntity(result);
 
       return result;
     } catch (error) {
@@ -208,6 +213,8 @@ export abstract class BaseRepository<T extends Document> {
 
   async deleteOne(filter: Partial<T>): Promise<boolean> {
     try {
+      const entity = await this.model.findOne(filter as any);
+
       const result = await retryWithBackoff(
         async () => await this.model.deleteOne(filter as any),
         {
@@ -215,8 +222,8 @@ export abstract class BaseRepository<T extends Document> {
         }
       );
 
-      if (result.deletedCount > 0 && this.cache) {
-        await this.invalidateRelatedCache(filter);
+      if (result.deletedCount > 0 && entity) {
+        await this.invalidateEntity(entity);
       }
 
       return result.deletedCount > 0;
@@ -247,20 +254,6 @@ export abstract class BaseRepository<T extends Document> {
         code: dbError.code,
       });
       throw dbError;
-    }
-  }
-
-  protected async invalidateRelatedCache(filter: Partial<T>): Promise<void> {
-    // TODO FIX
-    if (!this.cache) return;
-
-    const pattern = `${this.cachePrefix}*`;
-    const deleted = await this.cache.deleteByPattern(pattern);
-
-    if (deleted > 0) {
-      logger.debug(
-        `Invalidated ${deleted} cache entries for ${this.model.modelName}`
-      );
     }
   }
 

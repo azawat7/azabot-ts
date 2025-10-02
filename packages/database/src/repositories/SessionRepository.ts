@@ -8,6 +8,12 @@ export class SessionRepository extends BaseRepository<ISession> {
     super(Session);
   }
 
+  protected getEntityKey(entity: Partial<ISession>): string | null {
+    if (entity.sessionId) return entity.sessionId;
+    if ((entity as any)._id) return (entity as any)._id.toString();
+    return null;
+  }
+
   async createSession(
     sessionId: string,
     userId: Snowflake,

@@ -8,6 +8,12 @@ export class UserRepository extends BaseRepository<IUser> {
     super(User);
   }
 
+  protected getEntityKey(entity: Partial<IUser>): string | null {
+    if (entity.userId) return entity.userId;
+    if ((entity as any)._id) return (entity as any)._id.toString();
+    return null;
+  }
+
   async getOrCreate(userId: Snowflake): Promise<IUser> {
     const result = await this.findOne({ userId });
     if (!result) return await this.create({ userId });

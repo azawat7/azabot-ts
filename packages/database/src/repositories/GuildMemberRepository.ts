@@ -9,6 +9,14 @@ export class GuildMemberRepository extends BaseRepository<IGuildMember> {
     super(GuildMember);
   }
 
+  protected getEntityKey(entity: Partial<IGuildMember>): string | null {
+    if (entity.guildId && entity.userId) {
+      return `${entity.guildId}:${entity.userId}`;
+    }
+    if ((entity as any)._id) return (entity as any)._id.toString();
+    return null;
+  }
+
   async getOrCreate(
     guildId: Snowflake,
     userId: Snowflake

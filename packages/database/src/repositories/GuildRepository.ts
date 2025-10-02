@@ -8,6 +8,12 @@ export class GuildRepository extends BaseRepository<IGuild> {
     super(Guild);
   }
 
+  protected getEntityKey(entity: Partial<IGuild>): string | null {
+    if (entity.guildId) return entity.guildId;
+    if ((entity as any)._id) return (entity as any)._id.toString();
+    return null;
+  }
+
   async getOrCreate(guildId: Snowflake): Promise<IGuild> {
     const result = await this.findOne({ guildId });
     if (!result) return await this.create({ guildId });
