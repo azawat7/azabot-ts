@@ -3,16 +3,11 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ModuleSettings } from "@shaw/types";
 
 interface GuildDetails {
   info: { id: string; name: string; icon: string | null };
-  modules: GuildSettings;
-}
-
-interface GuildSettings {
-  levelModule: {
-    enabled: boolean;
-  };
+  modules: ModuleSettings;
 }
 
 export default function GuildDashboardPage() {
