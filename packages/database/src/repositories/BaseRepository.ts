@@ -133,7 +133,7 @@ export abstract class BaseRepository<T extends Document> {
         error: dbError.message,
         code: dbError.code,
       });
-      throw dbError;
+      return null;
     }
   }
 

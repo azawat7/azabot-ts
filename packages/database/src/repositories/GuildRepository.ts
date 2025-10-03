@@ -14,6 +14,10 @@ export class GuildRepository extends BaseRepository<IGuild> {
     return null;
   }
 
+  async get(guildId: Snowflake): Promise<IGuild | null> {
+    return await this.findOne({ guildId });
+  }
+
   async getOrCreate(guildId: Snowflake): Promise<IGuild> {
     const result = await this.findOne({ guildId });
     if (!result) return await this.create({ guildId });

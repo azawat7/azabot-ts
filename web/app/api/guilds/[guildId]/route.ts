@@ -47,7 +47,14 @@ export async function GET(
           const db = DatabaseManager.getInstance();
           await db.ensureConnection();
 
-          const guildSettings = await db.guilds.getOrCreate(guildId);
+          const guildSettings = await db.guilds.get(guildId);
+
+          if (!guildSettings) {
+            return NextResponse.json(
+              { error: "Bot not added to server" },
+              { status: 404 }
+            );
+          }
 
           return NextResponse.json({
             info: { id: guild.id, name: guild.name, icon: guild.icon },

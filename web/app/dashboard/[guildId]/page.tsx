@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ModuleSettings } from "@shaw/types";
@@ -12,6 +12,7 @@ interface GuildDetails {
 
 export default function GuildDashboardPage() {
   const params = useParams();
+  const router = useRouter();
   const guildId = params.guildId as string;
 
   const [guild, setGuild] = useState<GuildDetails | null>(null);
@@ -25,7 +26,14 @@ export default function GuildDashboardPage() {
       });
 
       if (!guildResponse.ok) {
-        throw new Error("Failed to fetch guild data");
+        const errorData = await guildResponse.json();
+        if (guildResponse.status === 404) {
+          const inviteUrl = `https://discord.com/oauth2/authorize?client_id=${process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID}&permissions=8&integration_type=0&scope=bot+applications.commands`;
+          window.open(inviteUrl, "_blank");
+          router.push("/dashboard");
+        }
+
+        throw new Error(errorData.error || "Failed to fetch guild data");
       }
       const guildData = await guildResponse.json();
       console.log(guildData);
