@@ -2,7 +2,7 @@ import { Document, Model } from "mongoose";
 import { logger } from "@shaw/utils";
 import { handleMongooseError, isRetryableError } from "../utils/DatabaseErrors";
 import { retryWithBackoff } from "../utils/RetryUtils";
-import { REDIS_CACHE_TTL, RepositoryName } from "../config";
+import { REDIS_CACHE_TTL, RepositoryName, TTL_JITTER } from "../config";
 import { RedisCache } from "../cache/RedisCache";
 
 export abstract class BaseRepository<T extends Document> {
@@ -31,8 +31,7 @@ export abstract class BaseRepository<T extends Document> {
   }
 
   protected getRandomizedTTL(): number {
-    const jitterPercent = 0.1;
-    const jitter = this.cacheTTL * jitterPercent * (Math.random() * 2 - 1);
+    const jitter = this.cacheTTL * TTL_JITTER * (Math.random() * 2 - 1);
     return Math.floor(this.cacheTTL + jitter);
   }
 

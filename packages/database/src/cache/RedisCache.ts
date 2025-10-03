@@ -1,6 +1,6 @@
 import { createClient, RedisArgument, RedisClientType } from "redis";
 import { logger } from "@shaw/utils";
-import { env } from "../config";
+import { BATCH_SIZE, env } from "../config";
 
 export class RedisCache {
   private client: RedisClientType | null = null;
@@ -107,7 +107,7 @@ export class RedisCache {
     try {
       let cursor: RedisArgument = "0";
       let deletedCount = 0;
-      const batchSize = 100;
+      const batchSize = BATCH_SIZE;
 
       do {
         const result = await this.client.scan(cursor, {

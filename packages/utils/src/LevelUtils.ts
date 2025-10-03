@@ -28,7 +28,6 @@ export class LevelUtils {
     const currentLevelXP = this.getXPForLevel(currentLevel, formula);
     const nextLevelXP = this.getXPForLevel(currentLevel + 1, formula);
     const progressXP = currentXP - currentLevelXP;
-    console.log(currentXP, currentLevelXP, progressXP);
     const totalXPNeeded = nextLevelXP - currentLevelXP;
     return Math.min(progressXP / totalXPNeeded, 1);
   }

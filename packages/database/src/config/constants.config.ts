@@ -28,3 +28,6 @@ export const DEFAULT_RETRY_OPTIONS_VALUES = {
   maxDelayMs: 30000,
   backoffMultiplier: 2,
 };
+
+export const BATCH_SIZE = 1000; // 1k keys per operation
+export const TTL_JITTER = 0.1; // 10%
