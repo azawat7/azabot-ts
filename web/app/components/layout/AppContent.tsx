@@ -1,7 +1,6 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Navbar } from "@/app/components/layout/Navbar";
 import { useAuthContext } from "@/app/contexts/AuthContext";
 import { Loading } from "@/app/components/layout/Loading";
 
@@ -18,7 +17,6 @@ export function AppContent({ children }: AppContentProps) {
 
   return (
     <>
-      <Navbar />
       <main>{children}</main>
     </>
   );

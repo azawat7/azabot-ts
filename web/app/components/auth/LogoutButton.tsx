@@ -2,6 +2,7 @@
 
 import { useCSRF } from "@/app/hooks/useCSRF";
 import { useState } from "react";
+import { Button } from "../ui/Button";
 
 export function LogoutButton() {
   const { getHeaders } = useCSRF();
@@ -10,8 +11,9 @@ export function LogoutButton() {
   const handleLogout = async () => {
     if (isLoading) return;
     try {
-      const headers = await getHeaders();
       setIsLoading(true);
+      const headers = await getHeaders();
+
       const response = await fetch("/api/auth/logout", {
         method: "POST",
         headers,
@@ -35,11 +37,13 @@ export function LogoutButton() {
   };
 
   return (
-    <button
+    <Button
       onClick={handleLogout}
-      className="p-2 bg-red-500 text-white cursor-pointer rounded-md"
+      isLoading={isLoading}
+      variant="danger"
+      size="md"
     >
       Logout
-    </button>
+    </Button>
   );
 }

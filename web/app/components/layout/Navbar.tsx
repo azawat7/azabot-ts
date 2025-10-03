@@ -2,11 +2,17 @@
 
 import Link from "next/link";
 import { LogoutButton } from "@/app/components/auth/LogoutButton";
-import { LoginButton } from "@/app/components/auth/LoginButton";
 import { useAuthContext } from "@/app/contexts/AuthContext";
+import { Button } from "../ui/Button";
+import { useState } from "react";
 
 export function Navbar() {
   const { user, isAuthenticated } = useAuthContext();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLoading = () => {
+    setIsLoading(true);
+  };
 
   return (
     <nav className="border-b  border-neutral-600">
@@ -21,6 +27,16 @@ export function Navbar() {
           <div className="flex items-center gap-6">
             {isAuthenticated && user ? (
               <>
+                <Button
+                  onClick={handleLoading}
+                  isLoading={isLoading}
+                  variant="secondary"
+                  size="md"
+                  as="a"
+                  href="/dashboard"
+                >
+                  Dashboard
+                </Button>
                 <LogoutButton />
                 <img
                   src={
@@ -35,7 +51,16 @@ export function Navbar() {
                 />
               </>
             ) : (
-              <LoginButton />
+              <Button
+                onClick={handleLoading}
+                isLoading={isLoading}
+                variant="primary"
+                size="md"
+                as="a"
+                href="/api/auth/login"
+              >
+                Login
+              </Button>
             )}
           </div>
         </div>

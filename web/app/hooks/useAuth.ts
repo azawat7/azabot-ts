@@ -131,19 +131,6 @@ export function useAuth(): UseAuthReturn {
     };
   }, [authState.user, checkAuth]);
 
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible" && authState.user) {
-        checkAuth();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [authState.user, checkAuth]);
-
   return {
     ...authState,
     refresh: checkAuth,
