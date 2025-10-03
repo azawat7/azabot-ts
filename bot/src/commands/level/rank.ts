@@ -13,7 +13,7 @@ import {
   TextInputStyle,
   User,
 } from "discord.js";
-import { CustomBaseClient, BaseCommand } from "@/base";
+import { CustomClient, Command } from "@/structures";
 import { CanvasRenderingContext2D, createCanvas, loadImage } from "canvas";
 import { LevelUtils, logger } from "@shaw/utils";
 
@@ -61,8 +61,8 @@ interface RankCardData {
   accentColor: string;
 }
 
-export default class RankCommand extends BaseCommand {
-  constructor(client: CustomBaseClient) {
+export default class RankCommand extends Command {
+  constructor(client: CustomClient) {
     super(
       client,
       new SlashCommandBuilder()

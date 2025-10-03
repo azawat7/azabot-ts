@@ -1,4 +1,4 @@
-export * from "./env.config";
-export * from "./constants.config";
+export * from "./env";
+export * from "./constants";
 
-export { webEnv as env } from "./env.config";
+export { webEnv as env } from "./env";

@@ -1,5 +1,3 @@
-import { JWTPayload } from "jose";
-
 export interface DiscordUser {
   id: string;
   username: string;
@@ -18,10 +16,6 @@ export interface SessionUser {
   id: string;
   username: string;
   avatar: string | null;
-}
-
-export interface CustomJWTPayload extends JWTPayload {
-  user: SessionUser;
 }
 
 export interface AuthState {

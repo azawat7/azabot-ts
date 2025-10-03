@@ -1,8 +1,8 @@
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
-import { CustomBaseClient, BaseCommand } from "@/base";
+import { CustomClient, Command } from "@/structures";
 
-export default class TestCommand extends BaseCommand {
-  constructor(client: CustomBaseClient) {
+export default class TestCommand extends Command {
+  constructor(client: CustomClient) {
     super(
       client,
       new SlashCommandBuilder().setName("test").setDescription("Test command.")

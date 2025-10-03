@@ -1,6 +1,6 @@
 import { TOKEN_EXPIRY_BUFFER } from "../config";
 import { DiscordTokenResponse, DiscordUser } from "../types";
-import { DISCORD_CONFIG } from "./";
+import { DISCORD_CONFIG } from ".";
 import { logger } from "@shaw/utils";
 
 export class DiscordService {

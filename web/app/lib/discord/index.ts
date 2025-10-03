@@ -1,2 +1,2 @@
-export * from "./discord.config";
-export * from "./discord.service";
+export * from "./config";
+export * from "./service";

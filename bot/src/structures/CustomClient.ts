@@ -6,15 +6,15 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import { glob } from "glob";
-import { BaseCommand, BaseEvent } from "@/base";
+import { Command, Event } from "@/structures";
 import { DatabaseManager } from "@shaw/database";
 import { logger } from "@shaw/utils";
 import path from "path";
 import { env } from "@/config";
 
-export class CustomBaseClient extends Client {
-  commands: Collection<String, BaseCommand>;
-  events: Collection<keyof ClientEvents, BaseEvent>;
+export class CustomClient extends Client {
+  commands: Collection<String, Command>;
+  events: Collection<keyof ClientEvents, Event>;
   db: DatabaseManager;
   constructor() {
     super({
@@ -68,7 +68,7 @@ export class CustomBaseClient extends Client {
       try {
         const fullPath = path.join(__dirname, "..", file);
         const CommandClass = await this.loadModule(fullPath);
-        const command = new CommandClass(this) as BaseCommand;
+        const command = new CommandClass(this) as Command;
         this.commands.set(command.commandInfo.name, command);
         slashCommands.push(command.commandInfo);
       } catch (error) {
@@ -94,7 +94,7 @@ export class CustomBaseClient extends Client {
       try {
         const fullPath = path.join(__dirname, "..", file);
         const EventClass = await this.loadModule(fullPath);
-        const event = new EventClass(this) as BaseEvent;
+        const event = new EventClass(this) as Event;
         this.events.set(event.name, event);
         this.on(event.name, (...args) => event.run(...args));
       } catch (error) {

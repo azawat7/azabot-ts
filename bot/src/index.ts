@@ -1,9 +1,9 @@
-import { CustomBaseClient } from "@/base";
+import { CustomClient } from "@/structures";
 import { logger } from "@shaw/utils";
 
 async function startBot() {
   try {
-    const Client = new CustomBaseClient();
+    const Client = new CustomClient();
     await Client.start();
   } catch (error) {
     logger.error("Error:", error);

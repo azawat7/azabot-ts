@@ -1,8 +1,8 @@
 import { Interaction } from "discord.js";
-import { CustomBaseClient, BaseEvent } from "@/base";
+import { CustomClient, Event } from "@/structures";
 
-export default class CommandInteractionCreateEvent extends BaseEvent {
-  constructor(client: CustomBaseClient) {
+export default class CommandInteractionCreateEvent extends Event {
+  constructor(client: CustomClient) {
     super(client, "interactionCreate");
   }
   async run(interaction: Interaction): Promise<void> {

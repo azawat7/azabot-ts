@@ -1,7 +1,11 @@
-import { jwtVerify, SignJWT } from "jose";
-import { CustomJWTPayload, SessionUser } from "../types";
+import { JWTPayload, jwtVerify, SignJWT } from "jose";
+import { SessionUser } from "../types";
 import { logger } from "@shaw/utils";
 import { env, JWT_EXPIRATION } from "../config";
+
+interface CustomJWTPayload extends JWTPayload {
+  user: SessionUser;
+}
 
 const JWT_SECRET = new TextEncoder().encode(env.authSecret);
 const JWT_ALGORITHM = "HS256";

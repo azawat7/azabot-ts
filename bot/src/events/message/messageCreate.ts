@@ -1,13 +1,13 @@
 import { Message } from "discord.js";
-import { CustomBaseClient, BaseEvent } from "@/base";
+import { CustomClient, Event } from "@/structures";
 import { logger } from "@shaw/utils";
 
-export default class MessageCreateEvent extends BaseEvent {
+export default class MessageCreateEvent extends Event {
   private readonly XP_MIN = 15;
   private readonly XP_MAX = 25;
   private readonly XP_COOLDOWN = 60000;
 
-  constructor(client: CustomBaseClient) {
+  constructor(client: CustomClient) {
     super(client, "messageCreate");
   }
 

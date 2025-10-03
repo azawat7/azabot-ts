@@ -1,10 +1,10 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { CustomBaseClient } from "@/base";
+import { CustomClient } from "@/structures";
 
-export abstract class BaseCommand {
+export abstract class Command {
   public guildOnly: boolean = true;
   constructor(
-    public client: CustomBaseClient,
+    public client: CustomClient,
     public commandInfo: SlashCommandBuilder,
     guildOnly: boolean = true
   ) {

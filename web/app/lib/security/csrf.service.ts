@@ -1,12 +1,6 @@
 import { randomBytes } from "crypto";
-import { cookies } from "next/headers";
 import { logger } from "@shaw/utils";
-import {
-  CSRF_TOKEN_EXPIRY,
-  CSRF_TOKEN_LENGTH,
-  CSRF_TOKEN_NAME,
-  env,
-} from "../config";
+import { CSRF_TOKEN_EXPIRY, CSRF_TOKEN_LENGTH } from "../config";
 import crypto from "crypto";
 import { SessionManager } from "../auth";
 import { DatabaseManager } from "@shaw/database";
