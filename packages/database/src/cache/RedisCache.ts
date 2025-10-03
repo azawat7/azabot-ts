@@ -1,4 +1,4 @@
-import { createClient, RedisClientType } from "redis";
+import { createClient, RedisArgument, RedisClientType } from "redis";
 import { logger } from "@shaw/utils";
 import { env } from "../config";
 
@@ -105,11 +105,32 @@ export class RedisCache {
     }
 
     try {
-      const keys = await this.client.keys(pattern);
-      if (keys.length === 0) return 0;
+      let cursor: RedisArgument = "0";
+      let deletedCount = 0;
+      const batchSize = 100;
 
-      await this.client.del(keys);
-      return keys.length;
+      do {
+        const result = await this.client.scan(cursor, {
+          MATCH: pattern,
+          COUNT: batchSize,
+        });
+
+        cursor = result.cursor;
+        const keys = result.keys;
+
+        if (keys.length > 0) {
+          await this.client.del(keys);
+          deletedCount += keys.length;
+        }
+      } while (cursor !== "0");
+
+      if (deletedCount > 0) {
+        logger.debug(
+          `Deleted ${deletedCount} keys matching pattern: ${pattern}`
+        );
+      }
+
+      return deletedCount;
     } catch (error) {
       logger.error(`Redis delete pattern error for ${pattern}:`, error);
       return 0;
@@ -220,6 +241,33 @@ export class RedisCache {
       await this.client.hDel(key, field);
     } catch (error) {
       logger.error(`Redis hash delete error for ${key}:${field}:`, error);
+    }
+  }
+
+  async increment(key: string): Promise<number> {
+    if (!this.isConnected() || !this.client) {
+      return 0;
+    }
+
+    try {
+      return await this.client.incr(key);
+    } catch (error) {
+      logger.error(`Redis increment error for key ${key}:`, error);
+      return 0;
+    }
+  }
+
+  async expire(key: string, seconds: number): Promise<boolean> {
+    if (!this.isConnected() || !this.client) {
+      return false;
+    }
+
+    try {
+      const result = await this.client.expire(key, seconds);
+      return result === 1;
+    } catch (error) {
+      logger.error(`Redis expire error for key ${key}:`, error);
+      return false;
     }
   }
 }

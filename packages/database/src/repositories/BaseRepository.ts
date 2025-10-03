@@ -30,12 +30,19 @@ export abstract class BaseRepository<T extends Document> {
     return entityKey ? this.getCacheKey(entityKey) : null;
   }
 
+  protected getRandomizedTTL(): number {
+    const jitterPercent = 0.1;
+    const jitter = this.cacheTTL * jitterPercent * (Math.random() * 2 - 1);
+    return Math.floor(this.cacheTTL + jitter);
+  }
+
   protected async cacheEntity(entity: T): Promise<void> {
     if (!this.cache) return;
 
     const cacheKey = this.getCacheKeyFromEntity(entity);
     if (cacheKey) {
-      await this.cache.set(cacheKey, entity, this.cacheTTL);
+      const ttl = this.getRandomizedTTL();
+      await this.cache.set(cacheKey, entity, ttl);
     }
   }
 
@@ -259,8 +266,17 @@ export abstract class BaseRepository<T extends Document> {
 
   async clearCache(): Promise<void> {
     if (!this.cache) return;
-    const pattern = `${this.cachePrefix}*`;
-    await this.cache.deleteByPattern(pattern);
-    logger.debug(`Cleared all cache for ${this.model.modelName}`);
+    try {
+      const pattern = `${this.cachePrefix}*`;
+      const deletedCount = await this.cache.deleteByPattern(pattern);
+
+      if (deletedCount > 0) {
+        logger.debug(
+          `Cleared ${deletedCount} cache entries for ${this.model.modelName}`
+        );
+      }
+    } catch (error) {
+      logger.error(`Failed to clear cache for ${this.model.modelName}:`, error);
+    }
   }
 }

@@ -31,11 +31,9 @@ export class RateLimiter {
     const ttlSeconds = Math.ceil(this.config.windowMs / 1000);
 
     try {
-      const client = (this.db.cache as any).client;
-
-      const count = await client.incr(key);
+      const count = await this.db.cache.increment(key);
       if (count === 1) {
-        await client.expire(key, ttlSeconds);
+        await this.db.cache.expire(key, ttlSeconds);
       }
 
       const resetAt = now + this.config.windowMs;
