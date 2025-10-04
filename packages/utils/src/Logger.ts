@@ -29,11 +29,14 @@ class Logger {
     const formattedArgs =
       args.length > 0
         ? args
-            .map((arg) =>
-              typeof arg === "object"
+            .map((arg) => {
+              if (arg instanceof Error) {
+                return `${arg.name}: ${arg.message}\n${arg.stack}`;
+              }
+              return typeof arg === "object"
                 ? JSON.stringify(arg, null, 2)
-                : String(arg)
-            )
+                : String(arg);
+            })
             .join(" ")
         : "";
 
