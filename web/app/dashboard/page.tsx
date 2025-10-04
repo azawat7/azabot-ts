@@ -1,57 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
-import { useGuildContext } from "../contexts/GuildContext";
+import { useAdminGuilds } from "../contexts/GuildContext";
 import Link from "next/link";
 import { useCSRF } from "../hooks/useCSRF";
 import { RefreshButton } from "../components/ui/RefreshButton";
 import { GuildCardSkeleton } from "../components/ui/Skeleton";
 
-interface Guild {
-  id: string;
-  name: string;
-  icon: string | null;
-}
-
-export default function DashboardPage({}: {}) {
+export default function DashboardPage() {
   const { user } = useAuthContext();
-  const { cacheGuildList } = useGuildContext();
+  const { adminGuilds, loading, error, fetchAdminGuilds, clearAdminGuilds } =
+    useAdminGuilds();
   const { getHeaders } = useCSRF();
-  const [guilds, setGuilds] = useState<Guild[]>([]);
-  const [guildsLoading, setGuildsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const fetchGuilds = async () => {
-    try {
-      setError(null);
-      const response = await fetch("/api/guilds", {
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch guilds");
-      }
-
-      const data = await response.json();
-      const guildsList = data.guilds || [];
-      setGuilds(guildsList);
-
-      if (guildsList.length > 0) {
-        cacheGuildList(guildsList);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load guilds");
-    } finally {
-      setGuildsLoading(false);
-      setIsRefreshing(false);
-    }
-  };
-
   const handleRefresh = async () => {
-    if (isRefreshing) return;
-    setGuildsLoading(true);
-    setIsRefreshing(true);
     try {
       const headers = await getHeaders();
       await fetch("/api/guilds", {
@@ -60,16 +21,12 @@ export default function DashboardPage({}: {}) {
         headers,
       });
 
-      await fetchGuilds();
+      clearAdminGuilds();
+      await fetchAdminGuilds();
     } catch (err) {
-      setError("Failed to refresh guilds");
-      setIsRefreshing(false);
+      console.error("Failed to refresh guilds:", err);
     }
   };
-
-  useEffect(() => {
-    fetchGuilds();
-  }, []);
 
   return (
     <>
@@ -77,19 +34,21 @@ export default function DashboardPage({}: {}) {
       <div className="px-8 py-8 rounded-2xl border-1 border-zinc-700">
         <div>
           <div className="flex justify-between items-center gap-4">
-            <p className="text-white text-xl">
-              Welcome back, {user?.username}! Select a server to manage.
-            </p>
+            <div className="flex items-center gap-3">
+              <p className="text-white text-xl">
+                Welcome back, {user?.username}! Select a server to manage.
+              </p>
+            </div>
             <RefreshButton
               size="md"
               onRefresh={handleRefresh}
-              isRefreshing={isRefreshing}
+              isRefreshing={loading}
             />
           </div>
         </div>
         <div className="border-b-1 my-6 border-zinc-700"></div>
 
-        {guildsLoading && (
+        {loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <GuildCardSkeleton />
             <GuildCardSkeleton />
@@ -100,13 +59,13 @@ export default function DashboardPage({}: {}) {
           </div>
         )}
 
-        {!guildsLoading && error && (
+        {!loading && error && (
           <div className="border-1 border-red-500 bg-red-500/10 rounded-lg p-8 mb-6 text-center">
             <p className="text-red-500">{error}</p>
           </div>
         )}
 
-        {!guildsLoading && !error && guilds.length === 0 && (
+        {!loading && !error && adminGuilds.length === 0 && (
           <div className="border-1 border-zinc-700 bg-zinc-900 rounded-lg p-8 text-center">
             <p className="text-neutral-400">
               No servers found. Make sure the bot is in your server!
@@ -114,9 +73,9 @@ export default function DashboardPage({}: {}) {
           </div>
         )}
 
-        {!guildsLoading && !error && guilds.length > 0 && (
+        {!loading && !error && adminGuilds.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {guilds.map((guild) => (
+            {adminGuilds.map((guild) => (
               <Link
                 key={guild.id}
                 href={`/dashboard/${guild.id}`}

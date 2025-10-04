@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useGuildContext } from "@/app/contexts/GuildContext";
+import { useCurrentGuild } from "@/app/contexts/GuildContext";
 import { HiChevronRight } from "react-icons/hi2";
 
 interface BreadcrumbItem {
@@ -13,7 +13,7 @@ interface BreadcrumbItem {
 export function Breadcrumb() {
   const pathname = usePathname();
   const router = useRouter();
-  const { guild } = useGuildContext();
+  const { currentGuild } = useCurrentGuild();
 
   const generateBreadcrumbs = (): BreadcrumbItem[] => {
     const segments = pathname.split("/").filter(Boolean);
@@ -28,9 +28,9 @@ export function Breadcrumb() {
     if (segments.length >= 2 && segments[0] === "dashboard") {
       const guildId = segments[1];
 
-      if (guild) {
+      if (currentGuild) {
         breadcrumbs.push({
-          label: guild.name,
+          label: currentGuild.name,
           href: `/dashboard/${guildId}`,
           isActive: pathname === `/dashboard/${guildId}`,
         });

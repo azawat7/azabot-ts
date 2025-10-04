@@ -1,2 +1,3 @@
 export * from "./config";
-export * from "./service";
+export * from "./user.service";
+export * from "./guild.service";

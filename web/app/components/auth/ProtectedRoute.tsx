@@ -19,9 +19,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
   }, [isAuthenticated, loading, router]);
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  if (!isAuthenticated && !loading) return null;
 
-  return <>{children}</>;
+  if (!loading) return <>{children}</>;
 }

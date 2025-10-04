@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { IoArrowBack } from "react-icons/io5";
 import { HiHome } from "react-icons/hi2";
 import { HiSparkles } from "react-icons/hi2";
-import { useGuildContext } from "../contexts/GuildContext";
+import { useCurrentGuild } from "../contexts/GuildContext";
 import { GuildInfoSkeleton } from "../components/ui/Skeleton";
 import { Breadcrumb } from "../components/ui/Breadcrumb";
 
@@ -21,7 +21,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
 function DashboardContent({ children }: { children: ReactNode }) {
   const { user } = useAuthContext();
-  const { guild, loading } = useGuildContext();
+  const { currentGuild, loading } = useCurrentGuild();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -54,26 +54,26 @@ function DashboardContent({ children }: { children: ReactNode }) {
           ) : (
             <>
               {/* Guild Info */}
-              {loading && !guild ? (
+              {loading && !currentGuild ? (
                 <GuildInfoSkeleton />
-              ) : guild ? (
+              ) : currentGuild ? (
                 <div className="bg-neutral-800 rounded-lg p-3 mb-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      {guild.icon ? (
+                      {currentGuild.icon ? (
                         <img
-                          src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`}
-                          alt={guild.name}
+                          src={`https://cdn.discordapp.com/icons/${currentGuild.id}/${currentGuild.icon}.png`}
+                          alt={currentGuild.name}
                           className="w-10 h-10 rounded-full"
                         />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-neutral-700 flex items-center justify-center text-sm font-bold text-white">
-                          {guild.name.charAt(0)}
+                          {currentGuild.name.charAt(0)}
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
                         <h3 className="text-white text-sm font-semibold truncate">
-                          {guild.name}
+                          {currentGuild.name}
                         </h3>
                         <p className="text-neutral-400 text-xs">
                           Current Server

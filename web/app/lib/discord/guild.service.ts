@@ -12,7 +12,7 @@ export enum GuildError {
 
 export interface GuildPermissionResult {
   hasPermission: boolean;
-  guild?: any;
+  guild?: UserGuild;
   error?: GuildError;
 }
 
@@ -23,6 +23,12 @@ export interface UserGuild {
   permissions: string;
 }
 
+export interface GuildInfo {
+  id: string;
+  name: string;
+  icon: string | null;
+}
+
 const ADMIN_GUILDS_CACHE_TTL = 60 * 15; // 15 minutes
 
 export class GuildService {
@@ -30,12 +36,11 @@ export class GuildService {
   private static readonly MANAGE_GUILD = BigInt(0x20);
   private static readonly CACHE_PREFIX = "adminGuilds:";
 
-  static async getUserGuilds(
+  static async getUserAdminGuilds(
     userId: string,
     discordToken: string
   ): Promise<{
     guilds: UserGuild[];
-    cached: boolean;
   }> {
     const db = DatabaseManager.getInstance();
     await db.ensureConnection();
@@ -44,7 +49,7 @@ export class GuildService {
     const cachedGuilds = await db.cache.get<UserGuild[]>(cacheKey);
 
     if (cachedGuilds) {
-      return { guilds: cachedGuilds, cached: true };
+      return { guilds: cachedGuilds };
     }
 
     try {
@@ -67,52 +72,15 @@ export class GuildService {
       }));
 
       await db.cache.set(cacheKey, formattedGuilds, ADMIN_GUILDS_CACHE_TTL);
-      return { guilds: formattedGuilds, cached: false };
+      return { guilds: formattedGuilds };
     } catch (error) {
       logger.error("Error fetching user guilds:", error);
       throw new Error(GuildError.DISCORD_API_ERROR);
     }
   }
 
-  static async getGuildWithPermissions(
-    guildId: string,
-    userId: string,
-    discordToken: string
-  ): Promise<{
-    info: { id: string; name: string; icon: string | null };
-    modules: any;
-  }> {
-    const permissionResult = await this.validateGuildAccess(
-      guildId,
-      userId,
-      discordToken
-    );
-
-    if (!permissionResult.hasPermission) {
-      throw new Error(permissionResult.error || GuildError.NO_PERMISSION);
-    }
-
-    const db = DatabaseManager.getInstance();
-    await db.ensureConnection();
-
-    const guildSettings = await db.guilds.get(guildId);
-    if (!guildSettings) {
-      throw new Error(GuildError.BOT_NOT_IN_SERVER);
-    }
-
-    return {
-      info: {
-        id: permissionResult.guild!.id,
-        name: permissionResult.guild!.name,
-        icon: permissionResult.guild!.icon,
-      },
-      modules: guildSettings.modules,
-    };
-  }
-
   static async validateGuildAccess(
     guildId: string,
-    userId: string,
     discordToken: string
   ): Promise<GuildPermissionResult> {
     try {
@@ -161,12 +129,12 @@ export class GuildService {
   }
 
   private static filterAdminGuilds(guilds: any[]): any[] {
-    return guilds.filter((guild: any) => {
-      return this.hasAdminPermission(guild.permissions);
-    });
+    return guilds.filter((guild: any) =>
+      this.hasAdminPermission(guild.permissions)
+    );
   }
 
-  private static hasAdminPermission(permissions: string): boolean {
+  static hasAdminPermission(permissions: string): boolean {
     const permissionsBigInt = BigInt(permissions);
     return (
       (permissionsBigInt & this.ADMINISTRATOR) === this.ADMINISTRATOR ||

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/app/lib/auth";
 import { withSecurity } from "@/app/lib/security";
-import { GuildService, GuildError } from "@/app/lib/services/GuildService";
+import { GuildService, GuildError } from "@/app/lib/discord/guild.service";
 import { logger } from "@shaw/utils";
 
 export async function GET(request: NextRequest) {
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     async (req) => {
       return withAuth(req, async (_, user, discordAccessToken) => {
         try {
-          const result = await GuildService.getUserGuilds(
+          const result = await GuildService.getUserAdminGuilds(
             user.id,
             discordAccessToken
           );
@@ -63,7 +63,7 @@ export async function DELETE(request: NextRequest) {
         } catch (error) {
           logger.error("Error clearing guild cache:", error);
           return NextResponse.json(
-            { error: "Internal server error" },
+            { error: GuildError.INTERNAL_ERROR },
             { status: 500 }
           );
         }
