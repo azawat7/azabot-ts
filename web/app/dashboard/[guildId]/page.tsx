@@ -36,7 +36,6 @@ export default function GuildDashboardPage() {
         throw new Error(errorData.error || "Failed to fetch guild data");
       }
       const guildData = await guildResponse.json();
-      console.log(guildData);
       setGuild(guildData);
     } catch (err) {
       setError(

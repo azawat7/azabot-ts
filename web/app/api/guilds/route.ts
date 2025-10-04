@@ -3,6 +3,7 @@ import { withAuth } from "@/app/lib/auth";
 import { withSecurity } from "@/app/lib/security";
 import { DiscordService } from "@/app/lib/discord";
 import { DatabaseManager } from "@shaw/database";
+import { logger } from "@shaw/utils";
 
 const GUILDS_CACHE_TTL = 60 * 60;
 
@@ -61,6 +62,7 @@ export async function GET(request: NextRequest) {
             cached: false,
           });
         } catch (error) {
+          logger.error("Error fetching guilds:", error);
           return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }
@@ -81,7 +83,7 @@ export async function DELETE(request: NextRequest) {
           const db = DatabaseManager.getInstance();
           await db.ensureConnection();
 
-          const cacheKey = `guilds:${user.id}`;
+          const cacheKey = `adminGuilds:${user.id}`;
           await db.cache.delete(cacheKey);
 
           return NextResponse.json({
