@@ -4,6 +4,8 @@ import { GuildService, GuildError, UserGuild } from "./guild.service";
 import { withAuth } from "@/app/lib/auth";
 import { DatabaseManager } from "@shaw/database";
 import { IGuild } from "@shaw/types";
+import { generateDiscordInviteUrl } from "@/app/lib/utils/invite";
+import { env } from "@/app/lib/config";
 
 type GuildPermissionsHandler = (
   request: NextRequest,
@@ -38,10 +40,15 @@ export async function withGuildPermissions(
 
       const guildSettings = await db.guilds.get(resolvedGuildId);
       if (!guildSettings) {
+        const inviteUrl = generateDiscordInviteUrl(
+          env.clientId,
+          resolvedGuildId
+        );
         return NextResponse.json(
           {
             error: GuildError.BOT_NOT_IN_SERVER,
             message: GuildService.getErrorMessage(GuildError.BOT_NOT_IN_SERVER),
+            inviteUrl,
           },
           {
             status: GuildService.getErrorStatusCode(

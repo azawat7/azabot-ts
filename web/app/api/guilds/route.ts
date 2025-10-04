@@ -17,7 +17,6 @@ export async function GET(request: NextRequest) {
 
           return NextResponse.json({
             guilds: result.guilds,
-            cached: result.cached,
           });
         } catch (error) {
           const errorMessage =

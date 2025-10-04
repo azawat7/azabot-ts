@@ -8,7 +8,7 @@ import { useGuildContext } from "@/app/contexts/GuildContext";
 
 export function LogoutButton() {
   const { getHeaders } = useCSRF();
-  const { clearAllCache } = useGuildContext();
+  const { clearAll } = useGuildContext();
   const { logout } = useAuthContext();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -25,7 +25,7 @@ export function LogoutButton() {
       });
 
       if (response.ok) {
-        clearAllCache();
+        clearAll();
         await logout();
         window.location.href = "/";
       } else {

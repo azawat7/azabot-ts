@@ -1,5 +1,4 @@
 "use client";
-import { ProtectedRoute } from "@/app/components/auth/ProtectedRoute";
 import { ReactNode } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
 import { LogoutButton } from "../components/auth/LogoutButton";
@@ -7,21 +6,16 @@ import { usePathname, useRouter } from "next/navigation";
 import { IoArrowBack } from "react-icons/io5";
 import { HiHome } from "react-icons/hi2";
 import { HiSparkles } from "react-icons/hi2";
-import { useCurrentGuild } from "../contexts/GuildContext";
+import { useGuildDetails } from "../contexts/GuildContext";
 import { GuildInfoSkeleton } from "../components/ui/Skeleton";
 import { Breadcrumb } from "../components/ui/Breadcrumb";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  return (
-    <ProtectedRoute>
-      <DashboardContent>{children}</DashboardContent>
-    </ProtectedRoute>
-  );
+  return <DashboardContent>{children}</DashboardContent>;
 }
 
 function DashboardContent({ children }: { children: ReactNode }) {
   const { user } = useAuthContext();
-  const { currentGuild, loading } = useCurrentGuild();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -31,6 +25,9 @@ function DashboardContent({ children }: { children: ReactNode }) {
 
   const guildId = isGuildPage || isModulePage ? pathname.split("/")[2] : null;
   const module = isModulePage ? pathname.split("/")[3] : null;
+
+  const { guildDetails, loading } = useGuildDetails(guildId || undefined);
+  const currentGuild = guildDetails?.info || null;
 
   return (
     <div className="flex h-screen">

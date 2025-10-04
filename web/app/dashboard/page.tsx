@@ -1,110 +1,13 @@
-"use client";
+import { SessionManager } from "@/app/lib/auth";
+import { redirect } from "next/navigation";
+import Dashboard from "./Dashboard";
 
-import { useAuthContext } from "../contexts/AuthContext";
-import { useAdminGuilds } from "../contexts/GuildContext";
-import Link from "next/link";
-import { useCSRF } from "../hooks/useCSRF";
-import { RefreshButton } from "../components/ui/RefreshButton";
-import { GuildCardSkeleton } from "../components/ui/Skeleton";
+export default async function DashboardPage() {
+  const session = await SessionManager.getSession();
 
-export default function DashboardPage() {
-  const { user } = useAuthContext();
-  const { adminGuilds, loading, error, fetchAdminGuilds, clearAdminGuilds } =
-    useAdminGuilds();
-  const { getHeaders } = useCSRF();
-  const handleRefresh = async () => {
-    try {
-      const headers = await getHeaders();
-      await fetch("/api/guilds", {
-        method: "DELETE",
-        credentials: "include",
-        headers,
-      });
+  if (!session) {
+    redirect("/");
+  }
 
-      clearAdminGuilds();
-      await fetchAdminGuilds();
-    } catch (err) {
-      console.error("Failed to refresh guilds:", err);
-    }
-  };
-
-  return (
-    <>
-      <div className="text-4xl font-bold mb-6 text-white">Dashboard</div>
-      <div className="px-8 py-8 rounded-2xl border-1 border-zinc-700">
-        <div>
-          <div className="flex justify-between items-center gap-4">
-            <div className="flex items-center gap-3">
-              <p className="text-white text-xl">
-                Welcome back, {user?.username}! Select a server to manage.
-              </p>
-            </div>
-            <RefreshButton
-              size="md"
-              onRefresh={handleRefresh}
-              isRefreshing={loading}
-            />
-          </div>
-        </div>
-        <div className="border-b-1 my-6 border-zinc-700"></div>
-
-        {loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <GuildCardSkeleton />
-            <GuildCardSkeleton />
-            <GuildCardSkeleton />
-            <GuildCardSkeleton />
-            <GuildCardSkeleton />
-            <GuildCardSkeleton />
-          </div>
-        )}
-
-        {!loading && error && (
-          <div className="border-1 border-red-500 bg-red-500/10 rounded-lg p-8 mb-6 text-center">
-            <p className="text-red-500">{error}</p>
-          </div>
-        )}
-
-        {!loading && !error && adminGuilds.length === 0 && (
-          <div className="border-1 border-zinc-700 bg-zinc-900 rounded-lg p-8 text-center">
-            <p className="text-neutral-400">
-              No servers found. Make sure the bot is in your server!
-            </p>
-          </div>
-        )}
-
-        {!loading && !error && adminGuilds.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {adminGuilds.map((guild) => (
-              <Link
-                key={guild.id}
-                href={`/dashboard/${guild.id}`}
-                className="bg-zinc-900 hover:bg-neutral-750 rounded-lg p-6 transition-colors border border-zinc-700 hover:border-neutral-500"
-              >
-                <div className="flex items-center gap-4">
-                  {guild.icon ? (
-                    <img
-                      src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`}
-                      alt={guild.name}
-                      className="w-16 h-16 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-full bg-neutral-700 flex items-center justify-center text-2xl font-bold text-white">
-                      {guild.name.charAt(0)}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold truncate text-white">
-                      {guild.name}
-                    </h3>
-                    <p className="text-sm text-white">Click to manage</p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-    </>
-  );
+  return <Dashboard />;
 }
