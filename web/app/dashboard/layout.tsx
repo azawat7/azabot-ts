@@ -8,6 +8,7 @@ import { IoArrowBack } from "react-icons/io5";
 import { HiHome } from "react-icons/hi2";
 import { HiSparkles } from "react-icons/hi2";
 import { useGuildContext } from "../contexts/GuildContext";
+import { GuildInfoSkeleton } from "../components/ui/Skeleton";
 import { Breadcrumb } from "../components/ui/Breadcrumb";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -54,24 +55,7 @@ function DashboardContent({ children }: { children: ReactNode }) {
             <>
               {/* Guild Info */}
               {loading && !guild ? (
-                <div className="bg-neutral-800 rounded-lg p-3 mb-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-neutral-700 animate-pulse"></div>
-                      <div className="flex-1 min-w-0">
-                        <div className="h-4 bg-neutral-700 rounded animate-pulse mb-1"></div>
-                        <div className="h-3 bg-neutral-700 rounded animate-pulse w-20"></div>
-                      </div>
-                    </div>
-                    <button
-                      className="flex items-center justify-center w-8 h-8 text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors rounded-md cursor-pointer"
-                      onClick={() => router.push("/dashboard")}
-                      title="Back to Servers"
-                    >
-                      <IoArrowBack className="w-6 h-6" />
-                    </button>
-                  </div>
-                </div>
+                <GuildInfoSkeleton />
               ) : guild ? (
                 <div className="bg-neutral-800 rounded-lg p-3 mb-4">
                   <div className="flex items-center justify-between">
