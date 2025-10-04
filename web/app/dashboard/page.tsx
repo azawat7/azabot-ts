@@ -19,9 +19,8 @@ export default function DashboardPage({}: {}) {
   const { cacheGuildList } = useGuildContext();
   const { getHeaders } = useCSRF();
   const [guilds, setGuilds] = useState<Guild[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [guildsLoading, setGuildsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isCached, setIsCached] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const fetchGuilds = async () => {
     try {
@@ -37,7 +36,6 @@ export default function DashboardPage({}: {}) {
       const data = await response.json();
       const guildsList = data.guilds || [];
       setGuilds(guildsList);
-      setIsCached(data.cached || false);
 
       if (guildsList.length > 0) {
         cacheGuildList(guildsList);
@@ -45,14 +43,14 @@ export default function DashboardPage({}: {}) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load guilds");
     } finally {
-      setLoading(false);
+      setGuildsLoading(false);
       setIsRefreshing(false);
     }
   };
 
   const handleRefresh = async () => {
     if (isRefreshing) return;
-    setLoading(true);
+    setGuildsLoading(true);
     setIsRefreshing(true);
     try {
       const headers = await getHeaders();
@@ -91,7 +89,7 @@ export default function DashboardPage({}: {}) {
         </div>
         <div className="border-b-1 my-6 border-zinc-700"></div>
 
-        {loading && (
+        {guildsLoading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <GuildCardSkeleton />
             <GuildCardSkeleton />
@@ -102,13 +100,13 @@ export default function DashboardPage({}: {}) {
           </div>
         )}
 
-        {!loading && error && (
+        {!guildsLoading && error && (
           <div className="border-1 border-red-500 bg-red-500/10 rounded-lg p-8 mb-6 text-center">
             <p className="text-red-500">{error}</p>
           </div>
         )}
 
-        {!loading && !error && guilds.length === 0 && (
+        {!guildsLoading && !error && guilds.length === 0 && (
           <div className="border-1 border-zinc-700 bg-zinc-900 rounded-lg p-8 text-center">
             <p className="text-neutral-400">
               No servers found. Make sure the bot is in your server!
@@ -116,7 +114,7 @@ export default function DashboardPage({}: {}) {
           </div>
         )}
 
-        {!loading && !error && guilds.length > 0 && (
+        {!guildsLoading && !error && guilds.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {guilds.map((guild) => (
               <Link
