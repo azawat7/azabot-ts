@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider, useAuthContext } from "./contexts/AuthContext";
 import { AppContent } from "./components/layout/AppContent";
+import { GuildProvider } from "./contexts/GuildContext";
 import { Inter } from "next/font/google";
 
 export const inter = Inter({
@@ -21,7 +22,9 @@ export default function RootLayout({
     <html lang="en" className={inter.className}>
       <body className="bg-neutral-900">
         <AuthProvider>
-          <AppContent>{children}</AppContent>
+          <GuildProvider>
+            <AppContent>{children}</AppContent>
+          </GuildProvider>
         </AuthProvider>
       </body>
     </html>

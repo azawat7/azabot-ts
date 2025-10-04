@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
+import { useGuildContext } from "../contexts/GuildContext";
 import Link from "next/link";
 import { useCSRF } from "../hooks/useCSRF";
-import { Button } from "../components/ui/Button";
+import { RefreshButton } from "../components/ui/RefreshButton";
+import { GuildCardSkeleton } from "../components/ui/Skeleton";
 
 interface Guild {
   id: string;
@@ -14,6 +16,7 @@ interface Guild {
 
 export default function DashboardPage({}: {}) {
   const { user } = useAuthContext();
+  const { cacheGuildList } = useGuildContext();
   const { getHeaders } = useCSRF();
   const [guilds, setGuilds] = useState<Guild[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,8 +35,13 @@ export default function DashboardPage({}: {}) {
       }
 
       const data = await response.json();
-      setGuilds(data.guilds || []);
+      const guildsList = data.guilds || [];
+      setGuilds(guildsList);
       setIsCached(data.cached || false);
+
+      if (guildsList.length > 0) {
+        cacheGuildList(guildsList);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load guilds");
     } finally {
@@ -70,28 +78,27 @@ export default function DashboardPage({}: {}) {
       <div className="text-4xl font-bold mb-6 text-white">Dashboard</div>
       <div className="px-8 py-8 rounded-2xl border-1 border-zinc-700">
         <div>
-          <div className="flex flex-col gap-1">
-            <div>
-              <p className="text-white text-xl">
-                Welcome back, {user?.username}! Select a server to manage.
-              </p>
-            </div>
-            <br />
-            <Button
-              className="w-fit"
-              size="sm"
-              onClick={handleRefresh}
-              isLoading={isRefreshing}
-            >
-              Refresh
-            </Button>
+          <div className="flex justify-between items-center gap-4">
+            <p className="text-white text-xl">
+              Welcome back, {user?.username}! Select a server to manage.
+            </p>
+            <RefreshButton
+              size="md"
+              onRefresh={handleRefresh}
+              isRefreshing={isRefreshing}
+            />
           </div>
         </div>
         <div className="border-b-1 my-6 border-zinc-700"></div>
 
         {loading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-800"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <GuildCardSkeleton />
+            <GuildCardSkeleton />
+            <GuildCardSkeleton />
+            <GuildCardSkeleton />
+            <GuildCardSkeleton />
+            <GuildCardSkeleton />
           </div>
         )}
 
