@@ -21,7 +21,8 @@ export default async function GuildModulePage({
 
   const hasAccess = await GuildService.validateGuildAccess(
     guildId,
-    session.discordAccessToken
+    session.discordAccessToken,
+    session.user.id
   );
 
   if (!hasAccess.hasPermission) {

@@ -53,7 +53,7 @@ export async function DELETE(request: NextRequest) {
     async (req) => {
       return withAuth(req, async (_, user) => {
         try {
-          await GuildService.clearUserGuildCache(user.id);
+          await GuildService.clearAllUserCaches(user.id);
 
           return NextResponse.json({
             success: true,
