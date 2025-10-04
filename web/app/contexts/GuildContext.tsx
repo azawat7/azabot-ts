@@ -120,24 +120,16 @@ export function GuildProvider({ children }: { children: ReactNode }) {
 
   const fetchGuild = useCallback(
     async (guildId: string) => {
-      if (guildDetails?.info.id === guildId) {
-        return;
-      }
-
-      if (fetchingRef.current === guildId) {
-        return;
-      }
-
-      if (guild?.id === guildId) {
-        return;
-      }
-
       const cachedData = getCachedGuild(guildId);
       if (cachedData) {
         setGuildDetails(cachedData);
         setGuild(cachedData.info);
         return;
       }
+
+      if (guildDetails?.info.id === guildId) return;
+      if (fetchingRef.current === guildId) return;
+      if (guild?.id === guildId) return;
 
       fetchingRef.current = guildId;
 
