@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/app/lib/auth";
 import { withSecurity } from "@/app/lib/security";
-import { DiscordService } from "@/app/lib/discord";
-import { DatabaseManager } from "@shaw/database";
+import { GuildService, GuildError } from "@/app/lib/services/GuildService";
+import { logger } from "@shaw/utils";
 
 export async function GET(
   request: NextRequest,
@@ -15,55 +15,35 @@ export async function GET(
     async (req) => {
       return withAuth(req, async (_, user, discordAccessToken) => {
         try {
-          const guildsResponse = await DiscordService.makeAPICall(
-            "/users/@me/guilds",
+          const guildData = await GuildService.getGuildWithPermissions(
+            guildId,
+            user.id,
             discordAccessToken
           );
 
-          if (!guildsResponse.ok) {
-            return NextResponse.json(
-              { error: "Failed to verify guild access" },
-              { status: guildsResponse.status }
-            );
-          }
-
-          const guilds = await guildsResponse.json();
-          const guild = guilds.find((g: any) => g.id === guildId);
-
-          const permissions = BigInt(guild.permissions);
-          const ADMINISTRATOR = BigInt(0x8);
-          const MANAGE_GUILD = BigInt(0x20);
-          const hasPermission =
-            (permissions & ADMINISTRATOR) === ADMINISTRATOR ||
-            (permissions & MANAGE_GUILD) === MANAGE_GUILD;
-
-          if (!hasPermission) {
-            return NextResponse.json(
-              { error: "Insufficient permissions" },
-              { status: 403 }
-            );
-          }
-
-          const db = DatabaseManager.getInstance();
-          await db.ensureConnection();
-
-          const guildSettings = await db.guilds.get(guildId);
-
-          if (!guildSettings) {
-            return NextResponse.json(
-              { error: "Bot not added to server" },
-              { status: 404 }
-            );
-          }
-
-          return NextResponse.json({
-            info: { id: guild.id, name: guild.name, icon: guild.icon },
-            modules: guildSettings.modules,
-          });
+          return NextResponse.json(guildData);
         } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : GuildError.INTERNAL_ERROR;
+
+          if (
+            errorMessage !== GuildError.BOT_NOT_IN_SERVER &&
+            errorMessage !== GuildError.NOT_FOUND &&
+            errorMessage !== GuildError.NO_PERMISSION
+          ) {
+            logger.error("Error fetching guild data:", error);
+          }
+
+          const statusCode = GuildService.getErrorStatusCode(
+            errorMessage as GuildError
+          );
+
           return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
+            {
+              error: errorMessage,
+              message: GuildService.getErrorMessage(errorMessage as GuildError),
+            },
+            { status: statusCode }
           );
         }
       });
