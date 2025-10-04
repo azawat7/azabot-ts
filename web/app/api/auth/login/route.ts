@@ -5,15 +5,14 @@ import {
 } from "@/app/lib/config";
 import { getDiscordAuthUrl } from "@/app/lib/discord";
 import { withRateLimit } from "@/app/lib/security";
+import { randomBytes } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   return withRateLimit(
     request,
     async () => {
-      const state =
-        Math.random().toString(36).substring(2, 15) +
-        Math.random().toString(36).substring(2, 15);
+      const state = randomBytes(32).toString("base64url");
 
       const discordAuthUrl = getDiscordAuthUrl(state);
 

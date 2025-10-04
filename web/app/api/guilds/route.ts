@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
         }
       });
     },
-    { rateLimit: { tier: "relaxed" } }
+    { rateLimit: { tier: "moderate" } }
   );
 }
 

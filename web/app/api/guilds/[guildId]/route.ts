@@ -60,6 +60,6 @@ export async function GET(
         guildId
       );
     },
-    { rateLimit: { tier: "relaxed" } }
+    { rateLimit: { tier: "moderate" } }
   );
 }

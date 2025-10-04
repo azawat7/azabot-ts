@@ -21,7 +21,7 @@ export class CSRFService {
       return null;
     }
 
-    const token = randomBytes(CSRF_TOKEN_LENGTH).toString("hex");
+    const token = randomBytes(CSRF_TOKEN_LENGTH).toString("base64url");
 
     try {
       const key = this.getCacheKey(session.sessionId);

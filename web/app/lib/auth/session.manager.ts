@@ -17,7 +17,7 @@ export class SessionManager {
   ): Promise<void> {
     await this.db.ensureConnection();
     const cookieStore = await cookies();
-    const sessionId = randomBytes(32).toString("hex");
+    const sessionId = randomBytes(32).toString("base64url");
     const discordTokenExpiry = new Date(
       Date.now() + tokenData.expires_in * 1000
     );
