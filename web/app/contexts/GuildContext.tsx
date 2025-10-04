@@ -35,6 +35,8 @@ interface GuildContextType {
   cacheGuildList: (guilds: Guild[]) => void;
 }
 
+const CACHE_EXPIRY = 15 * 60 * 1000; // 15 minutes
+
 const GuildContext = createContext<GuildContextType | undefined>(undefined);
 
 export function GuildProvider({ children }: { children: ReactNode }) {
@@ -53,7 +55,16 @@ export function GuildProvider({ children }: { children: ReactNode }) {
   const getCachedGuild = (guildId: string): GuildDetails | null => {
     try {
       const cached = localStorage.getItem(getCacheKey(guildId));
-      return cached ? JSON.parse(cached) : null;
+      if (!cached) return null;
+
+      const parsed = JSON.parse(cached);
+
+      if (parsed.timestamp && Date.now() - parsed.timestamp > CACHE_EXPIRY) {
+        localStorage.removeItem(getCacheKey(guildId));
+        return null;
+      }
+
+      return parsed.data;
     } catch (error) {
       console.error("Failed to get cached guild data:", error);
       return null;
@@ -62,7 +73,11 @@ export function GuildProvider({ children }: { children: ReactNode }) {
 
   const setCachedGuild = (guildId: string, data: GuildDetails) => {
     try {
-      localStorage.setItem(getCacheKey(guildId), JSON.stringify(data));
+      const cacheData = {
+        data,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(getCacheKey(guildId), JSON.stringify(cacheData));
     } catch (error) {
       console.error("Failed to cache guild data:", error);
     }
@@ -102,21 +117,6 @@ export function GuildProvider({ children }: { children: ReactNode }) {
       console.error("Failed to cache guild list:", error);
     }
   };
-
-  useEffect(() => {
-    const handlePageLoad = () => {
-      if (!hasInitializedRef.current) {
-        clearAllGuildCache();
-        hasInitializedRef.current = true;
-      }
-    };
-
-    if (window.performance) {
-      handlePageLoad();
-    } else {
-      hasInitializedRef.current = true;
-    }
-  }, []);
 
   const fetchGuild = useCallback(
     async (guildId: string) => {

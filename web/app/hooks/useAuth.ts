@@ -83,32 +83,16 @@ export function useAuth(): UseAuthReturn {
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        setAuthState({
-          user: null,
-          loading: false,
-          error: null,
-          sessionId: null,
-          hasValidDiscordToken: false,
-        });
-        if (refreshTimerRef.current) {
-          clearInterval(refreshTimerRef.current);
-          refreshTimerRef.current = null;
-        }
-        window.location.href = "/";
-      }
-    } catch (error) {
-      console.error("Logout failed:", error);
-      setAuthState((prev) => ({
-        ...prev,
-        error: "Logout failed",
-      }));
+    setAuthState({
+      user: null,
+      loading: false,
+      error: null,
+      sessionId: null,
+      hasValidDiscordToken: false,
+    });
+    if (refreshTimerRef.current) {
+      clearInterval(refreshTimerRef.current);
+      refreshTimerRef.current = null;
     }
   }, []);
 

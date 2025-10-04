@@ -3,9 +3,13 @@
 import { useCSRF } from "@/app/hooks/useCSRF";
 import { useState } from "react";
 import { Button } from "../ui/Button";
+import { useAuth } from "@/app/hooks/useAuth";
+import { useGuildContext } from "@/app/contexts/GuildContext";
 
 export function LogoutButton() {
   const { getHeaders } = useCSRF();
+  const { clearAllGuildCache } = useGuildContext();
+  const { logout } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogout = async () => {
@@ -16,10 +20,13 @@ export function LogoutButton() {
 
       const response = await fetch("/api/auth/logout", {
         method: "POST",
+        credentials: "include",
         headers,
       });
 
       if (response.ok) {
+        clearAllGuildCache();
+        await logout();
         window.location.href = "/";
       } else {
         const data = await response.json();
