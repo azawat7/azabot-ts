@@ -3,13 +3,13 @@
 import { useCSRF } from "@/app/hooks/useCSRF";
 import { useState } from "react";
 import { Button } from "../ui/Button";
-import { useAuth } from "@/app/hooks/useAuth";
+import { useAuthContext } from "@/app/contexts/AuthContext";
 import { useGuildContext } from "@/app/contexts/GuildContext";
 
 export function LogoutButton() {
   const { getHeaders } = useCSRF();
   const { clearAllGuildCache } = useGuildContext();
-  const { logout } = useAuth();
+  const { logout } = useAuthContext();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogout = async () => {
