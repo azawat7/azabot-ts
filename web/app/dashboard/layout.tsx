@@ -15,10 +15,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return <DashboardContent>{children}</DashboardContent>;
 }
 
-const getModuleSlug = (moduleKey: keyof ModuleSettings): string => {
-  return moduleKey.replace(/Module$/, "").toLowerCase();
-};
-
 function DashboardContent({ children }: { children: ReactNode }) {
   const { user } = useAuthContext();
   const pathname = usePathname();
@@ -120,7 +116,7 @@ function DashboardContent({ children }: { children: ReactNode }) {
                   Object.keys(MODULE_METADATA) as Array<keyof ModuleSettings>
                 ).map((moduleKey) => {
                   const metadata = MODULE_METADATA[moduleKey];
-                  const moduleSlug = getModuleSlug(moduleKey);
+                  const moduleSlug = metadata.name.toLowerCase();
                   const isActive = module === moduleSlug;
                   const IconComponent = (HeroIcons as any)[
                     metadata.reactIconName

@@ -65,15 +65,13 @@ export default class RankCommand extends Command {
   constructor(client: CustomClient) {
     super(
       client,
-      new SlashCommandBuilder()
-        .setName("rank")
-        .setDescription("Check your or someone else's rank and level")
-        .addUserOption((option) =>
-          option
-            .setName("user")
-            .setDescription("User to check rank for")
-            .setRequired(false)
-        ) as SlashCommandBuilder
+      new SlashCommandBuilder().addUserOption((option) =>
+        option
+          .setName("user")
+          .setDescription("User to check rank for")
+          .setRequired(false)
+      ) as SlashCommandBuilder,
+      "rank"
     );
   }
   async run(interaction: ChatInputCommandInteraction): Promise<void> {

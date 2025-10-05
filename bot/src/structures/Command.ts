@@ -1,14 +1,31 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { CustomClient } from "@/structures";
+import {
+  CommandMetadata,
+  getCommandByName,
+} from "@shaw/types/dist/commands/commands-metadata.types";
 
 export abstract class Command {
   public guildOnly: boolean = true;
+  public metadata: CommandMetadata;
+
   constructor(
     public client: CustomClient,
     public commandInfo: SlashCommandBuilder,
-    guildOnly: boolean = true
+    commandName: string
   ) {
-    this.guildOnly = guildOnly;
+    const metadata = getCommandByName(commandName);
+    if (!metadata) {
+      throw new Error(`Command metadata not found for command: ${commandName}`);
+    }
+
+    this.guildOnly = metadata.guildOnly ?? true;
+    this.metadata = metadata;
+
+    // Set name and description from metadata
+    this.commandInfo
+      .setName(metadata.name)
+      .setDescription(metadata.description);
   }
 
   async execute(interaction: ChatInputCommandInteraction): Promise<void> {
