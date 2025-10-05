@@ -5,6 +5,7 @@ import { LogoutButton } from "@/app/components/auth/LogoutButton";
 import { useAuthContext } from "@/app/contexts/AuthContext";
 import { Button } from "../ui/Button";
 import { useState } from "react";
+import { UserDropdown } from "./UserDropdown";
 
 export function Navbar() {
   const { user, isAuthenticated } = useAuthContext();
@@ -26,30 +27,7 @@ export function Navbar() {
 
           <div className="flex items-center gap-6">
             {isAuthenticated && user ? (
-              <>
-                <Button
-                  onClick={handleLoading}
-                  isLoading={isLoading}
-                  variant="secondary"
-                  size="md"
-                  as="a"
-                  href="/dashboard"
-                >
-                  Dashboard
-                </Button>
-                <LogoutButton />
-                <img
-                  src={
-                    user.avatar
-                      ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
-                      : `https://cdn.discordapp.com/embed/avatars/${
-                          parseInt(user.id) % 5
-                        }.png`
-                  }
-                  alt={`${user.username}'s avatar`}
-                  className="w-10 h-10 rounded-full"
-                />
-              </>
+              <UserDropdown />
             ) : (
               <Button
                 onClick={handleLoading}

@@ -1,7 +1,6 @@
 "use client";
 import { ReactNode } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
-import { LogoutButton } from "../components/auth/LogoutButton";
 import { usePathname, useRouter } from "next/navigation";
 import { IoArrowBack } from "react-icons/io5";
 import { HiHome } from "react-icons/hi2";
@@ -10,6 +9,7 @@ import { GuildInfoSkeleton } from "../components/ui/Skeleton";
 import { Breadcrumb } from "../components/ui/Breadcrumb";
 import { MODULE_METADATA, ModuleSettings } from "@shaw/types";
 import * as HeroIcons from "react-icons/hi2";
+import { UserDropdown } from "../components/layout/UserDropdown";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return <DashboardContent>{children}</DashboardContent>;
@@ -161,7 +161,8 @@ function DashboardContent({ children }: { children: ReactNode }) {
           <div className="flex items-center">
             <Breadcrumb />
           </div>
-          <div className="flex items-center gap-7">
+          <UserDropdown />
+          {/* <div className="flex items-center gap-7">
             <LogoutButton />
             <div className="border-r-1 border-zinc-700 h-9"></div>
             {user ? (
@@ -182,7 +183,7 @@ function DashboardContent({ children }: { children: ReactNode }) {
             ) : (
               <></>
             )}
-          </div>
+          </div> */}
         </div>
         <div className="p-8 flex-1 min-h-0">{children}</div>
       </div>
