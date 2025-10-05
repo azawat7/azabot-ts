@@ -4,7 +4,13 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useGuildDetails, useGuildContext } from "../../contexts/GuildContext";
 import { useEffect, useState } from "react";
-import { MODULE_METADATA, ModuleSettings } from "@shaw/types";
+import {
+  MODULE_METADATA,
+  ModuleSettings,
+  commandsMetadata,
+  getCommandsGroupedByCategory,
+  CommandMetadata,
+} from "@shaw/types";
 import * as HeroIcons from "react-icons/hi2";
 import { HiOutlineArrowPath, HiXMark } from "react-icons/hi2";
 import { useCSRF } from "@/app/hooks/useCSRF";
@@ -14,10 +20,14 @@ export default function GuildDashboard() {
   const params = useParams();
   const guildId = params.guildId as string;
   const { guildDetails, loading, error } = useGuildDetails(guildId);
-  const { fetchGuildDetails, toggleModule } = useGuildContext();
+  const { fetchGuildDetails, toggleModule, toggleCommand } = useGuildContext();
   const { getHeaders } = useCSRF();
   const [togglingModule, setTogglingModule] = useState<string | null>(null);
   const [toggleError, setToggleError] = useState<string | null>(null);
+  const [togglingCommand, setTogglingCommand] = useState<string | null>(null);
+  const [commandToggleError, setCommandToggleError] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     if (!guildDetails && !loading && !error) {
@@ -47,6 +57,31 @@ export default function GuildDashboard() {
       }, 2000);
     } finally {
       setTogglingModule(null);
+    }
+  };
+
+  const handleToggleCommand = async (commandName: string) => {
+    setTogglingCommand(commandName);
+    setCommandToggleError(null);
+
+    try {
+      const headers = await getHeaders();
+      const csrfToken = headers["x-csrf-token"];
+
+      if (!csrfToken) {
+        throw new Error("Failed to get CSRF token");
+      }
+
+      await toggleCommand(guildId, commandName, csrfToken);
+    } catch (err) {
+      setCommandToggleError(commandName);
+      console.error("Error toggling command:", err);
+
+      setTimeout(() => {
+        setCommandToggleError(null);
+      }, 2000);
+    } finally {
+      setTogglingCommand(null);
     }
   };
 
@@ -220,29 +255,78 @@ export default function GuildDashboard() {
           <h2 className="text-2xl font-semibold text-white mb-4 flex-shrink-0">
             Commands
           </h2>
-          <div className="space-y-3 overflow-y-auto flex-1 pr-2">
-            {/* Example command*/}
-            <div className="flex items-center justify-between p-4 rounded-lg bg-zinc-800/50 border border-zinc-700 hover:border-zinc-600 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                  <span className="text-purple-500 text-xl font-mono">/</span>
+          <div className="space-y-4 overflow-y-auto flex-1 pr-2">
+            {Object.entries(getCommandsGroupedByCategory()).map(
+              ([category, commands]) => (
+                <div key={category} className="space-y-2">
+                  <h3 className="text-lg font-medium text-neutral-300 capitalize">
+                    {category}
+                  </h3>
+                  <div className="space-y-2">
+                    {commands.map((command) => {
+                      const isToggling = togglingCommand === command.name;
+                      const hasError = commandToggleError === command.name;
+                      const isDisabled =
+                        guildDetails.disabledCommands?.includes(command.name) ??
+                        false;
+
+                      return (
+                        <div
+                          key={command.name}
+                          className="flex items-center justify-between p-4 rounded-lg bg-zinc-800/50 border border-zinc-700 hover:border-zinc-600 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                              <span className="text-purple-500 text-xl font-mono">
+                                /
+                              </span>
+                            </div>
+                            <div>
+                              <h4 className="text-white font-medium font-mono">
+                                {command.name}
+                              </h4>
+                              <p className="text-neutral-400 text-sm">
+                                {command.description}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {isToggling && (
+                              <HiOutlineArrowPath className="w-4 h-4 text-neutral-400 animate-spin [animation-duration:1.5s]" />
+                            )}
+                            {hasError && !isToggling && (
+                              <HiXMark className="w-5 h-5 text-red-500" />
+                            )}
+                            <label
+                              className={`relative inline-flex items-center ${
+                                isToggling
+                                  ? "cursor-not-allowed"
+                                  : "cursor-pointer"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                className="sr-only peer"
+                                checked={!isDisabled}
+                                disabled={isToggling}
+                                onChange={() =>
+                                  handleToggleCommand(command.name)
+                                }
+                              />
+                              <div
+                                className={`w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-700 ${
+                                  isToggling ? "opacity-50" : ""
+                                }`}
+                              ></div>
+                            </label>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-white font-medium font-mono">rank</h3>
-                  <p className="text-neutral-400 text-sm">
-                    View your server rank and level
-                  </p>
-                </div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="sr-only peer"
-                  defaultChecked
-                />
-                <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-700"></div>
-              </label>
-            </div>
+              )
+            )}
           </div>
         </div>
       </div>

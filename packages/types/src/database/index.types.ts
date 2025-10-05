@@ -5,6 +5,7 @@ import { Document } from "mongoose";
 export interface IGuild extends Document {
   guildId: Snowflake;
   modules: ModuleSettings;
+  disabledCommands: string[];
   createdAt: Date;
   updatedAt: Date;
 }

@@ -55,4 +55,33 @@ export class GuildRepository extends BaseRepository<IGuild> {
     )}`;
     return await this.updateOne({ guildId }, { [updatePath]: newSetting });
   }
+
+  async toggleCommand(
+    guildId: Snowflake,
+    commandName: string
+  ): Promise<IGuild | null> {
+    const guild = await this.getOrCreate(guildId);
+    const disabledCommands = (guild as any).disabledCommands || [];
+
+    const isDisabled = disabledCommands.includes(commandName);
+
+    if (isDisabled) {
+      const updatedCommands = disabledCommands.filter(
+        (cmd: string) => cmd !== commandName
+      );
+      return await this.updateOne({ guildId }, {
+        disabledCommands: updatedCommands,
+      } as any);
+    } else {
+      const updatedCommands = [...disabledCommands, commandName];
+      return await this.updateOne({ guildId }, {
+        disabledCommands: updatedCommands,
+      } as any);
+    }
+  }
+
+  async getDisabledCommands(guildId: Snowflake): Promise<string[]> {
+    const guild = await this.getOrCreate(guildId);
+    return (guild as any).disabledCommands || [];
+  }
 }

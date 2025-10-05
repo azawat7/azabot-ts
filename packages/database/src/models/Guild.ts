@@ -77,6 +77,7 @@ const GuildSchema = new Schema<IGuild>(
         ...buildSchemaFromConfig(LEVEL_MODULE_CONFIG),
       },
     },
+    disabledCommands: { type: [String], default: [] },
   },
   {
     timestamps: true,
