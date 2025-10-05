@@ -21,12 +21,14 @@ export interface UserGuild {
   name: string;
   icon: string | null;
   permissions: string;
+  owner: boolean;
 }
 
 export interface GuildInfo {
   id: string;
   name: string;
   icon: string | null;
+  owner: boolean;
 }
 
 const ADMIN_GUILDS_CACHE_TTL = 60 * 15; // 15 minutes
@@ -71,6 +73,7 @@ export class GuildService {
         name: guild.name,
         icon: guild.icon,
         permissions: guild.permissions,
+        owner: guild.owner || false,
       }));
 
       await db.cache.set(cacheKey, formattedGuilds, ADMIN_GUILDS_CACHE_TTL);

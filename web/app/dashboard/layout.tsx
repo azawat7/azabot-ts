@@ -5,14 +5,19 @@ import { LogoutButton } from "../components/auth/LogoutButton";
 import { usePathname, useRouter } from "next/navigation";
 import { IoArrowBack } from "react-icons/io5";
 import { HiHome } from "react-icons/hi2";
-import { HiSparkles } from "react-icons/hi2";
 import { useGuildDetails } from "../contexts/GuildContext";
 import { GuildInfoSkeleton } from "../components/ui/Skeleton";
 import { Breadcrumb } from "../components/ui/Breadcrumb";
+import { MODULE_METADATA, ModuleSettings } from "@shaw/types";
+import * as HeroIcons from "react-icons/hi2";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return <DashboardContent>{children}</DashboardContent>;
 }
+
+const getModuleSlug = (moduleKey: keyof ModuleSettings): string => {
+  return moduleKey.replace(/Module$/, "").toLowerCase();
+};
 
 function DashboardContent({ children }: { children: ReactNode }) {
   const { user } = useAuthContext();
@@ -110,31 +115,53 @@ function DashboardContent({ children }: { children: ReactNode }) {
                   <span className="text-sm font-medium">Home</span>
                 </button>
 
-                {/* Leveling module */}
-                <button
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer transition-colors duration-100 ${
-                    module === "leveling"
-                      ? "bg-neutral-600 text-white"
-                      : "text-neutral-300 hover:text-white hover:bg-neutral-700"
-                  }`}
-                  onClick={() => router.push(`/dashboard/${guildId}/leveling`)}
-                >
-                  <HiSparkles
-                    className={`w-5 h-5 transition-colors duration-100 ${
-                      module === "leveling"
-                        ? "text-white"
-                        : "text-neutral-400 group-hover:text-white"
-                    }`}
-                  />
-                  <span className="text-sm font-medium">Leveling</span>
-                </button>
+                {/* Dynamic module buttons */}
+                {(
+                  Object.keys(MODULE_METADATA) as Array<keyof ModuleSettings>
+                ).map((moduleKey) => {
+                  const metadata = MODULE_METADATA[moduleKey];
+                  const moduleSlug = getModuleSlug(moduleKey);
+                  const isActive = module === moduleSlug;
+                  const IconComponent = (HeroIcons as any)[
+                    metadata.reactIconName
+                  ];
+
+                  return (
+                    <button
+                      key={moduleKey}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer transition-colors duration-100 ${
+                        isActive
+                          ? "bg-neutral-600 text-white"
+                          : "text-neutral-300 hover:text-white hover:bg-neutral-700"
+                      }`}
+                      onClick={() =>
+                        router.push(`/dashboard/${guildId}/${moduleSlug}`)
+                      }
+                    >
+                      {IconComponent ? (
+                        <IconComponent
+                          className={`w-5 h-5 transition-colors duration-100 ${
+                            isActive
+                              ? "text-white"
+                              : "text-neutral-400 group-hover:text-white"
+                          }`}
+                        />
+                      ) : (
+                        <span className="text-xl">{metadata.emoji}</span>
+                      )}
+                      <span className="text-sm font-medium">
+                        {metadata.name}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </>
           )}
         </div>
       </nav>
-      <div className="grow">
-        <div className="border-b-1 border-zinc-700 h-22 flex items-center justify-between gap-7 p-6">
+      <div className="grow flex flex-col min-w-0">
+        <div className="border-b-1 border-zinc-700 h-22 flex items-center justify-between gap-7 p-6 flex-shrink-0">
           <div className="flex items-center">
             <Breadcrumb />
           </div>
@@ -161,7 +188,7 @@ function DashboardContent({ children }: { children: ReactNode }) {
             )}
           </div>
         </div>
-        <div className="p-8">{children}</div>
+        <div className="p-8 flex-1 min-h-0">{children}</div>
       </div>
     </div>
   );

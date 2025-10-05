@@ -35,6 +35,28 @@ export async function withGuildPermissions(
 
   return withAuth(request, async (req, user, discordAccessToken) => {
     try {
+      const permissionResult = await GuildService.validateGuildAccess(
+        resolvedGuildId,
+        discordAccessToken
+      );
+
+      if (!permissionResult.hasPermission) {
+        const statusCode = GuildService.getErrorStatusCode(
+          permissionResult.error || GuildError.NO_PERMISSION
+        );
+        const errorMessage = GuildService.getErrorMessage(
+          permissionResult.error || GuildError.NO_PERMISSION
+        );
+
+        return NextResponse.json(
+          {
+            error: permissionResult.error || GuildError.NO_PERMISSION,
+            message: errorMessage,
+          },
+          { status: statusCode }
+        );
+      }
+
       const db = DatabaseManager.getInstance();
       await db.ensureConnection();
 
@@ -55,28 +77,6 @@ export async function withGuildPermissions(
               GuildError.BOT_NOT_IN_SERVER
             ),
           }
-        );
-      }
-
-      const permissionResult = await GuildService.validateGuildAccess(
-        resolvedGuildId,
-        discordAccessToken
-      );
-
-      if (!permissionResult.hasPermission) {
-        const statusCode = GuildService.getErrorStatusCode(
-          permissionResult.error || GuildError.NO_PERMISSION
-        );
-        const errorMessage = GuildService.getErrorMessage(
-          permissionResult.error || GuildError.NO_PERMISSION
-        );
-
-        return NextResponse.json(
-          {
-            error: permissionResult.error || GuildError.NO_PERMISSION,
-            message: errorMessage,
-          },
-          { status: statusCode }
         );
       }
 

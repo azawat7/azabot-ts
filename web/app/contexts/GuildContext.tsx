@@ -13,6 +13,7 @@ interface Guild {
   id: string;
   name: string;
   icon: string | null;
+  owner: boolean;
 }
 
 interface GuildWithPermissions extends Guild {
@@ -37,6 +38,11 @@ interface GuildContextState {
 interface GuildContextType extends GuildContextState {
   fetchAdminGuilds: () => Promise<void>;
   fetchGuildDetails: (guildId: string) => Promise<void>;
+  toggleModule: (
+    guildId: string,
+    module: keyof ModuleSettings,
+    csrfToken: string
+  ) => Promise<void>;
 
   clearAdminGuilds: () => void;
   clearGuildDetails: (guildId: string) => void;
@@ -159,6 +165,59 @@ export function GuildProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const toggleModule = useCallback(
+    async (
+      guildId: string,
+      module: keyof ModuleSettings,
+      csrfToken: string
+    ): Promise<void> => {
+      try {
+        const response = await fetch(`/api/guilds/${guildId}/modules`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "x-csrf-token": csrfToken,
+          },
+          credentials: "include",
+          body: JSON.stringify({ module }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.message || `Failed to toggle module ${module}`
+          );
+        }
+
+        const data = await response.json();
+
+        setState((prev) => {
+          const currentGuildDetails = prev.guildDetails[guildId];
+          if (!currentGuildDetails) return prev;
+
+          return {
+            ...prev,
+            guildDetails: {
+              ...prev.guildDetails,
+              [guildId]: {
+                ...currentGuildDetails,
+                modules: data.modules,
+              },
+            },
+          };
+        });
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : `Failed to toggle module ${module}`;
+
+        throw new Error(errorMessage);
+      }
+    },
+    []
+  );
+
   const clearAdminGuilds = useCallback(() => {
     setState((prev) => ({
       ...prev,
@@ -202,6 +261,7 @@ export function GuildProvider({ children }: { children: ReactNode }) {
     ...state,
     fetchAdminGuilds,
     fetchGuildDetails,
+    toggleModule,
     clearAdminGuilds,
     clearGuildDetails,
     clearAll,

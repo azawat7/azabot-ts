@@ -131,3 +131,88 @@ export function BreadcrumbSkeleton() {
     </div>
   );
 }
+
+export function GuildDashboardSkeleton() {
+  return (
+    <div className="flex flex-col h-full animate-pulse">
+      {/* Header Skeleton */}
+      <div className="mb-6 select-none flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="h-10 bg-zinc-700 rounded w-64"></div>
+          <div className="h-8 bg-zinc-800 rounded w-48"></div>
+        </div>
+      </div>
+
+      {/* Guild Information Skeleton */}
+      <div className="px-8 py-6 rounded-2xl border-1 border-zinc-700 bg-zinc-900/50 mb-6 select-none flex-shrink-0">
+        <div className="h-8 bg-zinc-700 rounded w-48 mb-4"></div>
+        <div className="flex items-center gap-6 flex-wrap">
+          <div className="flex items-center gap-7">
+            <div className="w-16 h-16 rounded-full bg-zinc-700"></div>
+            <div>
+              <div className="h-4 bg-zinc-700 rounded w-24 mb-2"></div>
+              <div className="h-6 bg-zinc-700 rounded w-32"></div>
+            </div>
+          </div>
+          <div className="h-12 w-px bg-zinc-700" />
+          <div>
+            <div className="h-4 bg-zinc-700 rounded w-20 mb-2"></div>
+            <div className="h-6 bg-zinc-700 rounded w-40"></div>
+          </div>
+          <div className="h-12 w-px bg-zinc-700" />
+          <div>
+            <div className="h-4 bg-zinc-700 rounded w-24 mb-2"></div>
+            <div className="h-8 bg-zinc-700 rounded w-28"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modules and Commands Grid Skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
+        {/* Modules Skeleton */}
+        <div className="px-8 py-6 rounded-2xl border-1 border-zinc-700 bg-zinc-900/50 select-none flex flex-col min-h-0">
+          <div className="h-8 bg-zinc-700 rounded w-32 mb-4 flex-shrink-0"></div>
+          <div className="space-y-3 overflow-y-auto flex-1 pr-2">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between p-4 rounded-lg bg-zinc-800/50 border border-zinc-700"
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="w-10 h-10 rounded-lg bg-zinc-700"></div>
+                  <div className="flex-1">
+                    <div className="h-5 bg-zinc-700 rounded w-32 mb-2"></div>
+                    <div className="h-4 bg-zinc-700 rounded w-48"></div>
+                  </div>
+                </div>
+                <div className="w-11 h-6 bg-zinc-700 rounded-full"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Commands Skeleton */}
+        <div className="px-8 py-6 rounded-2xl border-1 border-zinc-700 bg-zinc-900/50 select-none flex flex-col min-h-0">
+          <div className="h-8 bg-zinc-700 rounded w-36 mb-4 flex-shrink-0"></div>
+          <div className="space-y-3 overflow-y-auto flex-1 pr-2">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between p-4 rounded-lg bg-zinc-800/50 border border-zinc-700"
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="w-10 h-10 rounded-lg bg-zinc-700"></div>
+                  <div className="flex-1">
+                    <div className="h-5 bg-zinc-700 rounded w-24 mb-2"></div>
+                    <div className="h-4 bg-zinc-700 rounded w-40"></div>
+                  </div>
+                </div>
+                <div className="w-11 h-6 bg-zinc-700 rounded-full"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

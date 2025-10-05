@@ -5,16 +5,18 @@ import { LEVEL_MODULE_CONFIG } from "./level-config";
 export interface ModuleMetadata {
   name: string;
   emoji: string;
+  reactIconName: string;
   description: string;
   categories: string[];
 }
 
 export const MODULE_METADATA: Record<keyof ModuleSettings, ModuleMetadata> = {
   levelModule: {
-    name: "Leveling System",
-    emoji: "📈",
+    name: "Leveling",
+    emoji: "📊",
+    reactIconName: "HiSparkles",
     description:
-      "A comprehensive leveling system with XP, role rewards, and customizable progression",
+      "A leveling system with XP, role rewards, and customizable progression",
     categories: ["messageXp", "lvlUpMsg", "roleRewards"],
   },
 };
