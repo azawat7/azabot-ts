@@ -125,7 +125,6 @@ export function ArrayField<T>({
       {help && !error && label && (
         <p className="text-neutral-500 text-xs">{help}</p>
       )}
-      {error && <p className="text-red-500 text-xs">{error}</p>}
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
   RoleConfigOption,
   UserConfigOption,
   ModuleSettings,
+  checkCrossFieldValidation,
 } from "./types";
 
 function generateZodSchema(option: ConfigOption): z.ZodTypeAny {
@@ -207,6 +208,27 @@ export class ZodConfigValidator {
     const result = schema.safeParse(data);
 
     if (result.success) {
+      const moduleConfig = this.moduleConfigs.get(moduleId);
+      if (moduleConfig) {
+        const crossFieldErrors = this.validateCrossFieldConstraints(
+          moduleConfig,
+          result.data
+        );
+        if (crossFieldErrors.length > 0) {
+          const zodError = new z.ZodError(
+            crossFieldErrors.map((error) => ({
+              code: "custom",
+              message: error.message,
+              path: error.path,
+            }))
+          );
+          return {
+            success: false,
+            errors: zodError,
+          };
+        }
+      }
+
       return {
         success: true,
         data: result.data as ModuleSettings<T>,
@@ -217,6 +239,42 @@ export class ZodConfigValidator {
         errors: result.error,
       };
     }
+  }
+
+  private validateCrossFieldConstraints(
+    moduleConfig: ModuleConfig,
+    data: any
+  ): Array<{ path: (string | number)[]; message: string }> {
+    const errors: Array<{ path: (string | number)[]; message: string }> = [];
+
+    for (const [categoryKey, category] of Object.entries(
+      moduleConfig.categories
+    )) {
+      for (const [optionKey, option] of Object.entries(category.options)) {
+        if (
+          option.crossFieldValidation &&
+          option.crossFieldValidation.length > 0
+        ) {
+          const currentValue = data[categoryKey]?.[optionKey];
+
+          for (const validation of option.crossFieldValidation) {
+            const result = checkCrossFieldValidation(
+              validation,
+              data,
+              currentValue
+            );
+            if (!result.isValid) {
+              errors.push({
+                path: [categoryKey, optionKey],
+                message: result.errorMessage || "Cross-field validation failed",
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return errors;
   }
 }
 

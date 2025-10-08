@@ -6,11 +6,18 @@ export interface BaseConfigOption {
   help?: string;
   visible?: boolean;
   dependencies?: ConfigDependency[];
+  crossFieldValidation?: CrossFieldValidation[];
 }
 
 export interface ConfigDependency {
   field: string;
   condition: DependencyCondition;
+}
+
+export interface CrossFieldValidation {
+  field: string;
+  condition: DependencyCondition;
+  errorMessage: string;
 }
 
 export type DependencyCondition =
@@ -20,7 +27,11 @@ export type DependencyCondition =
   | { type: "notIn"; values: any[] }
   | { type: "truthy" }
   | { type: "falsy" }
-  | { type: "custom"; validator: (value: any) => boolean };
+  | { type: "custom"; validator: (value: any) => boolean }
+  | {
+      type: "customCrossField";
+      validator: (referencedValue: any, currentValue: any) => boolean;
+    };
 
 export interface BooleanConfigOption extends BaseConfigOption {
   type: "boolean";
@@ -190,9 +201,42 @@ export function checkDependency(
       return !Boolean(value);
     case "custom":
       return dependency.condition.validator(value);
+    case "customCrossField":
+      throw new Error(
+        "customCrossField condition type should only be used in cross-field validation"
+      );
     default:
       return true;
   }
+}
+
+export function checkCrossFieldValidation(
+  validation: CrossFieldValidation,
+  settings: Record<string, any>,
+  currentValue?: any
+): { isValid: boolean; errorMessage?: string } {
+  const referencedValue = getNestedValue(settings, validation.field);
+
+  if (validation.condition.type === "customCrossField") {
+    const isValid = validation.condition.validator(
+      referencedValue,
+      currentValue
+    );
+    return {
+      isValid,
+      errorMessage: isValid ? undefined : validation.errorMessage,
+    };
+  }
+
+  const isValid = checkDependency(
+    { field: validation.field, condition: validation.condition },
+    settings
+  );
+
+  return {
+    isValid,
+    errorMessage: isValid ? undefined : validation.errorMessage,
+  };
 }
 
 export function getNestedValue(obj: Record<string, any>, path: string): any {
@@ -217,6 +261,12 @@ export const DependencyConditions = {
   falsy: () => ({ type: "falsy" as const }),
   custom: (validator: (value: any) => boolean) => ({
     type: "custom" as const,
+    validator,
+  }),
+  customCrossField: (
+    validator: (referencedValue: any, currentValue: any) => boolean
+  ) => ({
+    type: "customCrossField" as const,
     validator,
   }),
 };

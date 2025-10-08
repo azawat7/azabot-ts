@@ -50,7 +50,7 @@ export const LEVEL_MODULE_CONFIG = createModuleConfig({
           type: "select",
           options: ["Easy", "Medium", "Hard"] as LevelFormula[],
           default: "Medium",
-          help: "Level 10: Easy ~85 msgs, Medium ~154 msgs, Hard ~284 msgs | Level 50: Easy ~873 msgs, Medium ~1821 msgs, Hard ~4382 msgs",
+          help: "On default settings | Level 10: Easy ~85 msgs, Medium ~154 msgs, Hard ~284 msgs | Level 50: Easy ~873 msgs, Medium ~1821 msgs, Hard ~4382 msgs",
         },
         minXp: {
           name: "Minimum XP per Message",
@@ -60,6 +60,18 @@ export const LEVEL_MODULE_CONFIG = createModuleConfig({
           max: 200,
           default: 25,
           unit: "XP",
+          crossFieldValidation: [
+            {
+              field: "messageXp.maxXp",
+              condition: {
+                type: "customCrossField",
+                validator: (maxXp: number, currentValue: number) =>
+                  currentValue <= maxXp,
+              },
+              errorMessage:
+                "Minimum XP must be less than or equal to maximum XP",
+            },
+          ],
         },
         maxXp: {
           name: "Maximum XP per Message",
@@ -69,6 +81,18 @@ export const LEVEL_MODULE_CONFIG = createModuleConfig({
           max: 200,
           default: 35,
           unit: "XP",
+          crossFieldValidation: [
+            {
+              field: "messageXp.minXp",
+              condition: {
+                type: "customCrossField",
+                validator: (minXp: number, currentValue: number) =>
+                  currentValue >= minXp,
+              },
+              errorMessage:
+                "Maximum XP must be greater than or equal to minimum XP",
+            },
+          ],
         },
         cooldown: {
           name: "XP Gain Cooldown",
@@ -178,6 +202,30 @@ export const LEVEL_MODULE_CONFIG = createModuleConfig({
           },
           maxItems: 25,
           default: [],
+          crossFieldValidation: [
+            {
+              field: "roleRewards.rewards",
+              condition: {
+                type: "customCrossField",
+                validator: (rewardsArray: any[], currentValue: any) => {
+                  if (!Array.isArray(rewardsArray)) return true;
+                  const levels = rewardsArray.map(
+                    (reward: any) => reward.level
+                  );
+                  const levelCounts = new Map<number, number>();
+                  for (const level of levels) {
+                    levelCounts.set(level, (levelCounts.get(level) || 0) + 1);
+                  }
+                  for (const count of levelCounts.values()) {
+                    if (count > 2) return false;
+                  }
+
+                  return true;
+                },
+              },
+              errorMessage: "Each level can have a maximum of two role rewards",
+            },
+          ],
         },
       },
     }),
