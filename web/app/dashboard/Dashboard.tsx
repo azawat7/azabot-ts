@@ -42,7 +42,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (adminGuilds.length <= 1 && !loading && !error && !hasInitiallyFetched) {
-      fetchAdminGuilds(false); // CHANGE TO TRUE
+      fetchAdminGuilds(false); // TODO FOR PROD CHANGE TO TRUE
       setHasInitiallyFetched(true);
     }
   }, [adminGuilds.length, loading, error, fetchAdminGuilds]);
