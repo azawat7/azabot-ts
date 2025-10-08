@@ -1,6 +1,11 @@
 import { ConnectOptions } from "mongoose";
 
-export type RepositoryName = "Guild" | "GuildMember" | "Session" | "User";
+export type RepositoryName =
+  | "Guild"
+  | "GuildMember"
+  | "Session"
+  | "User"
+  | "UserGuilds";
 
 export const CONNECTION_OPTIONS: ConnectOptions = {
   maxPoolSize: 10,
@@ -15,8 +20,9 @@ export const CONNECTION_OPTIONS: ConnectOptions = {
 export const REDIS_CACHE_TTL: Record<RepositoryName, number> = {
   Guild: 10 * 60, // 10 minutes
   GuildMember: 5 * 60, // 5 minutes
-  Session: 10 * 60, // 5 minutes
   User: 5 * 60, // 5 minutes
+  Session: 7 * 24 * 60 * 60, // 7 days
+  UserGuilds: 20 * 60, // 20 minutes
 };
 
 export const SESSION_CLEANUP_INTERVAL = 60 * 60 * 1000; // 1 hour in ms

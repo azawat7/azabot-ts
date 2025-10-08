@@ -202,19 +202,4 @@ export class SessionManager {
 
     cookieStore.delete(SESSION_COOKIE_NAME);
   }
-
-  static async cleanupExpiredSessions(): Promise<void> {
-    await this.db.ensureConnection();
-
-    try {
-      const expiredDate = new Date(Date.now() - SESSION_DURATION * 1000);
-      const result = await this.db.sessions.cleanupExpiredSessions(expiredDate);
-
-      if (result > 0) {
-        logger.info(`Cleaned up ${result} expired sessions`);
-      }
-    } catch (error) {
-      logger.error("Error cleaning up expired sessions:", error);
-    }
-  }
 }

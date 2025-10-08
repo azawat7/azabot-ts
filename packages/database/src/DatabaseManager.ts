@@ -1,8 +1,11 @@
 import mongoose from "mongoose";
+
 import { UserRepository } from "./repositories/UserRepository";
 import { GuildMemberRepository } from "./repositories/GuildMemberRepository";
 import { GuildRepository } from "./repositories/GuildRepository";
-import { SessionRepository } from "./repositories/SessionRepository";
+import { SessionCache } from "./repositories/SessionCache";
+import { UserGuildsCache } from "./repositories/UserGuildsCache";
+
 import { logger } from "@shaw/utils";
 import {
   ConnectionError,
@@ -19,7 +22,8 @@ export class DatabaseManager {
   public guildMembers: GuildMemberRepository;
   public guilds: GuildRepository;
   public users: UserRepository;
-  public sessions: SessionRepository;
+  public sessions: SessionCache;
+  public userGuilds: UserGuildsCache;
   public cache: RedisCache;
 
   constructor() {
@@ -28,12 +32,13 @@ export class DatabaseManager {
     this.guildMembers = new GuildMemberRepository();
     this.guilds = new GuildRepository();
     this.users = new UserRepository();
-    this.sessions = new SessionRepository();
-
+    this.sessions = new SessionCache();
+    this.userGuilds = new UserGuildsCache();
     this.guildMembers.setCache(this.cache);
     this.guilds.setCache(this.cache);
     this.users.setCache(this.cache);
     this.sessions.setCache(this.cache);
+    this.userGuilds.setCache(this.cache);
   }
 
   static getInstance(): DatabaseManager {
@@ -155,7 +160,8 @@ export class DatabaseManager {
       this.guildMembers.clearCache(),
       this.guilds.clearCache(),
       this.users.clearCache(),
-      this.sessions.clearCache(),
+      this.sessions.clearAll(),
+      this.userGuilds.clearAll(),
     ]);
     logger.info("Cleaned up all repository caches");
   }

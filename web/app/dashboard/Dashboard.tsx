@@ -16,6 +16,7 @@ export default function Dashboard() {
     useAdminGuilds();
   const { getHeaders } = useCSRF();
   const [refreshButtonLoading, setRefreshButtonLoading] = useState(false);
+  const [hasInitiallyFetched, setHasInitiallyFetched] = useState(false);
 
   const handleRefresh = async () => {
     try {
@@ -28,6 +29,7 @@ export default function Dashboard() {
       });
 
       clearAdminGuilds();
+      setHasInitiallyFetched(false);
       await fetchAdminGuilds();
     } catch (err) {
       console.error("Failed to refresh guilds:", err);
@@ -37,8 +39,9 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (adminGuilds.length === 0 && !loading && !error) {
-      fetchAdminGuilds();
+    if (adminGuilds.length <= 1 && !loading && !error && !hasInitiallyFetched) {
+      fetchAdminGuilds(true);
+      setHasInitiallyFetched(true);
     }
   }, [adminGuilds.length, loading, error, fetchAdminGuilds]);
 

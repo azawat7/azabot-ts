@@ -10,6 +10,11 @@ export async function GET(request: NextRequest) {
     async (req) => {
       return withAuth(req, async (_, user, discordAccessToken) => {
         try {
+          const forceRefresh = req.nextUrl.searchParams.get("forceRefresh");
+          if (forceRefresh === "true") {
+            await GuildService.clearUserGuildCache(user.id);
+          }
+
           const result = await GuildService.getUserAdminGuilds(
             user.id,
             discordAccessToken

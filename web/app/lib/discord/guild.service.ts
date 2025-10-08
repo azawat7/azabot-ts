@@ -56,8 +56,6 @@ const GUILD_CHANNELS_CACHE_TTL = 60 * 60; // 60 minutes
 export class GuildService {
   private static readonly ADMINISTRATOR = BigInt(0x8);
   private static readonly MANAGE_GUILD = BigInt(0x20);
-  private static readonly CACHE_PREFIX = "adminGuilds:";
-  private static readonly GUILD_ACCESS_CACHE_PREFIX = "guildAccess:";
   private static readonly GUILD_ROLES_CACHE_PREFIX = "guildRoles:";
   private static readonly GUILD_CHANNELS_CACHE_PREFIX = "guildChannels:";
 
@@ -70,11 +68,10 @@ export class GuildService {
     const db = DatabaseManager.getInstance();
     await db.ensureConnection();
 
-    const cacheKey = `${this.CACHE_PREFIX}${userId}`;
-    const cachedGuilds = await db.cache.get<UserGuild[]>(cacheKey);
+    const cachedUserGuilds = await db.userGuilds.get(userId);
 
-    if (cachedGuilds) {
-      return { guilds: cachedGuilds };
+    if (cachedUserGuilds) {
+      return { guilds: cachedUserGuilds.guilds };
     }
 
     try {
@@ -97,7 +94,7 @@ export class GuildService {
         owner: guild.owner || false,
       }));
 
-      await db.cache.set(cacheKey, formattedGuilds, ADMIN_GUILDS_CACHE_TTL);
+      await db.userGuilds.set(userId, { userId, guilds: formattedGuilds });
       return { guilds: formattedGuilds };
     } catch (error) {
       logger.error("Error fetching user guilds:", error);
@@ -114,11 +111,15 @@ export class GuildService {
     await db.ensureConnection();
 
     if (userId) {
-      const cacheKey = `${this.GUILD_ACCESS_CACHE_PREFIX}${userId}:${guildId}`;
-      const cachedResult = await db.cache.get<GuildPermissionResult>(cacheKey);
+      const cachedResult = await db.userGuilds.get(userId);
 
       if (cachedResult) {
-        return cachedResult;
+        return {
+          hasPermission: cachedResult.guilds.some(
+            (g: UserGuild) => g.id === guildId
+          ),
+          guild: cachedResult.guilds.find((g: UserGuild) => g.id === guildId),
+        };
       }
     }
 
@@ -143,10 +144,7 @@ export class GuildService {
           hasPermission: false,
           error: GuildError.NOT_FOUND,
         };
-        if (userId) {
-          const cacheKey = `${this.GUILD_ACCESS_CACHE_PREFIX}${userId}:${guildId}`;
-          await db.cache.set(cacheKey, result, GUILD_ACCESS_CACHE_TTL);
-        }
+
         return result;
       }
 
@@ -157,10 +155,7 @@ export class GuildService {
           hasPermission: false,
           error: GuildError.NO_PERMISSION,
         };
-        if (userId) {
-          const cacheKey = `${this.GUILD_ACCESS_CACHE_PREFIX}${userId}:${guildId}`;
-          await db.cache.set(cacheKey, result, GUILD_ACCESS_CACHE_TTL);
-        }
+
         return result;
       }
 
@@ -170,8 +165,11 @@ export class GuildService {
       };
 
       if (userId) {
-        const cacheKey = `${this.GUILD_ACCESS_CACHE_PREFIX}${userId}:${guildId}`;
-        await db.cache.set(cacheKey, result, GUILD_ACCESS_CACHE_TTL);
+        const { permissions_new, banner, features, ...cleanGuild } = guild;
+        await db.userGuilds.set(userId, {
+          userId,
+          guilds: [cleanGuild],
+        });
       }
 
       return result;
@@ -202,24 +200,7 @@ export class GuildService {
     const db = DatabaseManager.getInstance();
     await db.ensureConnection();
 
-    const cacheKey = `${this.CACHE_PREFIX}${userId}`;
-    await db.cache.delete(cacheKey);
-  }
-
-  static async clearGuildAccessCache(
-    userId: string,
-    guildId?: string
-  ): Promise<void> {
-    const db = DatabaseManager.getInstance();
-    await db.ensureConnection();
-
-    if (guildId) {
-      const cacheKey = `${this.GUILD_ACCESS_CACHE_PREFIX}${userId}:${guildId}`;
-      await db.cache.delete(cacheKey);
-    } else {
-      const pattern = `${this.GUILD_ACCESS_CACHE_PREFIX}${userId}:*`;
-      await db.cache.deleteByPattern(pattern);
-    }
+    await db.userGuilds.delete(userId);
   }
 
   static async clearAllUserCaches(userId: string): Promise<void> {
@@ -227,8 +208,6 @@ export class GuildService {
     await db.ensureConnection();
 
     await this.clearUserGuildCache(userId);
-
-    await this.clearGuildAccessCache(userId);
   }
 
   static async getGuildRoles(guildId: string): Promise<{

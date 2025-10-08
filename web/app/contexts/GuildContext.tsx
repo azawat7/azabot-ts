@@ -42,7 +42,7 @@ interface GuildContextState {
 }
 
 interface GuildContextType extends GuildContextState {
-  fetchAdminGuilds: () => Promise<void>;
+  fetchAdminGuilds: (forceRefresh?: boolean) => Promise<void>;
   fetchGuildDetails: (guildId: string) => Promise<void>;
   toggleModule: (
     guildId: string,
@@ -82,44 +82,52 @@ export function GuildProvider({ children }: { children: ReactNode }) {
     guildDetailsError: {},
   });
 
-  const fetchAdminGuilds = useCallback(async (): Promise<void> => {
-    setState((prev) => ({
-      ...prev,
-      adminGuildsLoading: true,
-      adminGuildsError: null,
-    }));
-
-    try {
-      const response = await fetch("/api/guilds", {
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to fetch admin guilds");
-      }
-
-      const data = await response.json();
-      const guilds = data.guilds || [];
-
+  const fetchAdminGuilds = useCallback(
+    async (forceRefresh: boolean = false): Promise<void> => {
       setState((prev) => ({
         ...prev,
-        adminGuilds: guilds,
-        adminGuildsLoading: false,
+        adminGuildsLoading: true,
         adminGuildsError: null,
       }));
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to fetch admin guilds";
 
-      setState((prev) => ({
-        ...prev,
-        adminGuilds: [],
-        adminGuildsLoading: false,
-        adminGuildsError: errorMessage,
-      }));
-    }
-  }, []);
+      try {
+        const response = await fetch(
+          `/api/guilds?forceRefresh=${forceRefresh}`,
+          {
+            credentials: "include",
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to fetch admin guilds");
+        }
+
+        const data = await response.json();
+        const guilds = data.guilds || [];
+
+        setState((prev) => ({
+          ...prev,
+          adminGuilds: guilds,
+          adminGuildsLoading: false,
+          adminGuildsError: null,
+        }));
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch admin guilds";
+
+        setState((prev) => ({
+          ...prev,
+          adminGuilds: [],
+          adminGuildsLoading: false,
+          adminGuildsError: errorMessage,
+        }));
+      }
+    },
+    []
+  );
 
   const fetchGuildDetails = useCallback(
     async (guildId: string): Promise<void> => {
@@ -310,7 +318,7 @@ export function GuildProvider({ children }: { children: ReactNode }) {
             method: "PATCH",
             headers: {
               "Content-Type": "application/json",
-              "X-CSRF-Token": csrfToken,
+              "x-csrf-token": csrfToken,
             },
             credentials: "include",
             body: JSON.stringify({

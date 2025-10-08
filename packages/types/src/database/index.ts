@@ -23,12 +23,20 @@ export interface IUser extends Document {
   rankAccentColor: string;
 }
 
-export interface ISession extends Document {
+export interface SessionData {
   sessionId: string;
   userId: Snowflake;
   discordAccessToken: string;
   discordRefreshToken: string;
   discordTokenExpiry: Date;
-  createdAt: Date;
-  updatedAt: Date;
+}
+
+export type UserGuildsData = { userId: Snowflake; guilds: UserGuild[] };
+
+export interface UserGuild {
+  id: string;
+  name: string;
+  icon: string | null;
+  permissions: string;
+  owner: boolean;
 }
