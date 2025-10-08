@@ -34,7 +34,7 @@ function DashboardContent({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-screen">
-      <nav className="border-r-1 border-default-border h-full w-xs">
+      <nav className="border-r-1 border-default-border h-full w-full max-w-3xs">
         <div className="border-b-1 border-default-border h-22 mb-6 flex items-center justify-center text-4xl">
           <a href="/dashboard" className="select-none text-primary-text">
             All Bot
