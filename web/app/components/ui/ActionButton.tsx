@@ -9,6 +9,8 @@ interface ActionButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: "sm" | "md" | "lg";
   icon?: ReactElement;
   loadingIcon?: ReactElement;
+  text?: string;
+  variant?: "icon" | "text" | "icon-text";
 }
 
 export function ActionButton({
@@ -18,18 +20,26 @@ export function ActionButton({
   className = "",
   icon,
   loadingIcon,
+  text,
+  variant = "icon",
   ...props
 }: ActionButtonProps) {
   const sizeClasses = {
-    sm: "w-8 h-8 aspect-square",
-    md: "w-10 h-10 aspect-square",
-    lg: "w-12 h-12 aspect-square",
+    sm: variant === "icon" ? "w-8 h-8 aspect-square" : "px-3 py-1.5 h-8",
+    md: variant === "icon" ? "w-10 h-10 aspect-square" : "px-4 py-2 h-10",
+    lg: variant === "icon" ? "w-12 h-12 aspect-square" : "px-6 py-3 h-12",
   };
 
   const iconSizeClasses = {
     sm: "w-4 h-4",
     md: "w-5 h-5",
     lg: "w-6 h-6",
+  };
+
+  const textSizeClasses = {
+    sm: "text-sm",
+    md: "text-base",
+    lg: "text-lg",
   };
 
   return (
@@ -39,7 +49,11 @@ export function ActionButton({
       className={`
         ${sizeClasses[size]}
         bg-zinc-900 hover:bg-zinc-800 
-        border-1 border-zinc-700 hover:border-zinc-600
+        ${
+          className.includes("border-")
+            ? ""
+            : "border-1 border-zinc-700 hover:border-zinc-600"
+        }
         rounded-xl
         flex items-center justify-center
         transition-all duration-200
@@ -49,7 +63,31 @@ export function ActionButton({
       {...props}
     >
       {isLoading && loadingIcon ? (
-        loadingIcon
+        <div className="flex items-center gap-2">
+          {loadingIcon}
+          {variant !== "icon" && text && (
+            <span className={`${textSizeClasses[size]} text-neutral-200`}>
+              {text}
+            </span>
+          )}
+        </div>
+      ) : variant === "text" ? (
+        <span
+          className={`${textSizeClasses[size]} text-neutral-200 font-medium`}
+        >
+          {text}
+        </span>
+      ) : variant === "icon-text" ? (
+        <div className="flex items-center gap-2">
+          {icon && <div className={iconSizeClasses[size]}>{icon}</div>}
+          {text && (
+            <span
+              className={`${textSizeClasses[size]} text-neutral-200 font-medium`}
+            >
+              {text}
+            </span>
+          )}
+        </div>
       ) : icon ? (
         icon
       ) : (

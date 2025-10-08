@@ -12,6 +12,7 @@ interface RoleSelectorProps {
   disabled?: boolean;
   error?: string;
   allowNone?: boolean;
+  isModified?: boolean;
 }
 
 export function RoleSelector({
@@ -20,6 +21,7 @@ export function RoleSelector({
   disabled = false,
   error,
   allowNone = true,
+  isModified = false,
 }: RoleSelectorProps) {
   const params = useParams();
   const guildId = params.guildId as string;
@@ -76,6 +78,7 @@ export function RoleSelector({
         options={options}
         disabled={disabled}
         error={error}
+        isModified={isModified}
         placeholder={allowNone ? "No role selected" : "Choose a role"}
         getDisplayText={getDisplayText}
         renderOption={renderRoleOption}

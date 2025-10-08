@@ -45,6 +45,7 @@ interface TextInputProps {
   maxLength?: number;
   disabled?: boolean;
   error?: string;
+  isModified?: boolean;
 }
 
 export function TextInput({
@@ -54,6 +55,7 @@ export function TextInput({
   maxLength,
   disabled = false,
   error,
+  isModified = false,
 }: TextInputProps) {
   return (
     <input
@@ -63,8 +65,12 @@ export function TextInput({
       placeholder={placeholder}
       maxLength={maxLength}
       disabled={disabled}
-      className={`w-full px-3 py-2 bg-zinc-800 border rounded-md text-white placeholder-neutral-500   transition-colors ${
-        error ? "border-red-500 " : "border-zinc-600 hover:border-zinc-500"
+      className={`w-full px-3 py-2 bg-zinc-800 border rounded-md text-white placeholder-neutral-500 transition-colors focus:outline-none ${
+        error
+          ? "border-red-500"
+          : isModified
+          ? "border-orange-500"
+          : "border-zinc-600 hover:border-zinc-500"
       } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
     />
   );
@@ -78,6 +84,7 @@ interface NumberInputProps {
   step?: number;
   disabled?: boolean;
   error?: string;
+  isModified?: boolean;
 }
 
 export function NumberInput({
@@ -88,6 +95,7 @@ export function NumberInput({
   step = 1,
   disabled = false,
   error,
+  isModified = false,
 }: NumberInputProps) {
   return (
     <input
@@ -98,8 +106,12 @@ export function NumberInput({
       max={max}
       step={step}
       disabled={disabled}
-      className={`w-full px-3 py-2 bg-zinc-800 border rounded-md text-white placeholder-neutral-500   transition-colors ${
-        error ? "border-red-500 " : "border-zinc-600 hover:border-zinc-500"
+      className={`w-full px-3 py-2 bg-zinc-800 border rounded-md text-white placeholder-neutral-500 transition-colors focus:outline-none ${
+        error
+          ? "border-red-500"
+          : isModified
+          ? "border-orange-500"
+          : "border-zinc-600 hover:border-zinc-500"
       } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
     />
   );
@@ -114,6 +126,7 @@ interface SelectInputProps {
   placeholder?: string;
   getDisplayText?: (value: string) => string;
   renderOption?: (value: string) => React.ReactNode;
+  isModified?: boolean;
 }
 
 export function SelectInput({
@@ -125,6 +138,7 @@ export function SelectInput({
   placeholder = "Select an option",
   getDisplayText,
   renderOption,
+  isModified = false,
 }: SelectInputProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -156,8 +170,12 @@ export function SelectInput({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-3 py-2 bg-zinc-800 border rounded-md text-white  transition-colors flex items-center justify-between ${
-          error ? "border-red-500" : "border-zinc-600 hover:border-zinc-500"
+        className={`w-full px-3 py-2 bg-zinc-800 border rounded-md text-white transition-colors flex items-center justify-between focus:outline-none ${
+          error
+            ? "border-red-500"
+            : isModified
+            ? "border-orange-500"
+            : "border-zinc-600 hover:border-zinc-500"
         } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
       >
         <div className={value ? "text-white" : "text-neutral-500"}>
@@ -184,7 +202,7 @@ export function SelectInput({
                 key={option}
                 type="button"
                 onClick={() => handleSelect(option)}
-                className="w-full px-3 py-2 text-left text-white hover:bg-zinc-700  transition-colors first:rounded-t-md last:rounded-b-md"
+                className="w-full px-3 py-2 text-left text-white hover:bg-zinc-700 transition-colors first:rounded-t-md last:rounded-b-md focus:outline-none"
               >
                 {renderOption
                   ? renderOption(option)
@@ -209,6 +227,7 @@ interface BooleanInputProps {
   onChange: (value: boolean) => void;
   disabled?: boolean;
   error?: string;
+  isModified?: boolean;
 }
 
 export function BooleanInput({
@@ -216,26 +235,34 @@ export function BooleanInput({
   onChange,
   disabled = false,
   error,
+  isModified = false,
 }: BooleanInputProps) {
   return (
-    <label
-      className={`relative inline-flex items-center ${
-        disabled ? "cursor-not-allowed" : "cursor-pointer"
-      }`}
-    >
-      <input
-        type="checkbox"
-        checked={value}
-        onChange={(e) => onChange(e.target.checked)}
-        disabled={disabled}
-        className="sr-only peer"
-      />
-      <div
-        className={`w-11 h-6 bg-neutral-700  rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-700 ${
-          disabled ? "opacity-50" : ""
-        } ${error ? "" : ""}`}
-      />
-    </label>
+    <div className="flex items-center gap-3">
+      <label
+        className={`relative inline-flex items-center ${
+          disabled ? "cursor-not-allowed" : "cursor-pointer"
+        }`}
+      >
+        <input
+          type="checkbox"
+          checked={value}
+          onChange={(e) => onChange(e.target.checked)}
+          disabled={disabled}
+          className="sr-only peer"
+        />
+        <div
+          className={`w-11 h-6 bg-neutral-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-700 ${
+            disabled ? "opacity-50" : ""
+          }`}
+        />
+      </label>
+      {isModified && (
+        <span className="text-orange-500 text-xs font-medium select-none">
+          •
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -244,8 +271,10 @@ interface TimeInputProps {
   onChange: (value: number) => void;
   min?: number;
   max?: number;
+  unit?: "seconds" | "minutes" | "hours" | "days";
   disabled?: boolean;
   error?: string;
+  isModified?: boolean;
 }
 
 export function TimeInput({
@@ -253,20 +282,31 @@ export function TimeInput({
   onChange,
   min,
   max,
+  unit = "seconds",
   disabled = false,
   error,
+  isModified = false,
 }: TimeInputProps) {
   return (
-    <input
-      type="number"
-      value={value}
-      onChange={(e) => onChange(Number(e.target.value))}
-      min={min}
-      max={max}
-      disabled={disabled}
-      className={`w-full px-3 py-2 bg-zinc-800 border rounded-md text-white placeholder-neutral-500   transition-colors ${
-        error ? "border-red-500 " : "border-zinc-600 hover:border-zinc-500"
-      } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-    />
+    <div className="relative">
+      <input
+        type="number"
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        min={min}
+        max={max}
+        disabled={disabled}
+        className={`w-full px-3 py-2 bg-zinc-800 border rounded-md text-white placeholder-neutral-500 transition-colors focus:outline-none ${
+          error
+            ? "border-red-500"
+            : isModified
+            ? "border-orange-500"
+            : "border-zinc-600 hover:border-zinc-500"
+        } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+      />
+      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+        <span className="text-neutral-400 text-sm font-medium">{unit}</span>
+      </div>
+    </div>
   );
 }

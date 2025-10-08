@@ -18,6 +18,7 @@ import { HiTrash } from "react-icons/hi2";
 interface DynamicFormRendererProps {
   config: ModuleConfig;
   formData: any;
+  originalFormData?: any;
   onChange: (path: string, value: any) => void;
   validationErrors: Record<string, string>;
   disabled?: boolean;
@@ -26,10 +27,18 @@ interface DynamicFormRendererProps {
 export function DynamicFormRenderer({
   config,
   formData,
+  originalFormData,
   onChange,
   validationErrors,
   disabled = false,
 }: DynamicFormRendererProps) {
+  const isFieldModified = (path: string): boolean => {
+    if (!originalFormData) return false;
+    const currentValue = getNestedValue(formData, path);
+    const originalValue = getNestedValue(originalFormData, path);
+    return JSON.stringify(currentValue) !== JSON.stringify(originalValue);
+  };
+
   const renderField = (
     fieldKey: string,
     fieldConfig: any,
@@ -39,12 +48,14 @@ export function DynamicFormRenderer({
     const fullPath = categoryPath ? `${categoryPath}.${fieldKey}` : fieldKey;
     const value = getNestedValue(formData, fullPath);
     const error = validationErrors[fullPath];
+    const isModified = isFieldModified(fullPath);
 
     const commonProps = {
       value,
       onChange: (newValue: any) => onChange(fullPath, newValue),
       error,
       disabled: disabled || isDisabled,
+      isModified,
     };
 
     switch (fieldConfig.type) {
@@ -73,6 +84,7 @@ export function DynamicFormRenderer({
             {...commonProps}
             min={fieldConfig.min}
             max={fieldConfig.max}
+            unit={fieldConfig.unit}
           />
         );
 

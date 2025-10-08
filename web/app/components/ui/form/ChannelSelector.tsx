@@ -13,6 +13,7 @@ interface ChannelSelectorProps {
   error?: string;
   allowNone?: boolean;
   channelTypes?: ChannelType[];
+  isModified?: boolean;
 }
 
 export function ChannelSelector({
@@ -22,6 +23,7 @@ export function ChannelSelector({
   error,
   allowNone = true,
   channelTypes = [ChannelType.GuildText],
+  isModified = false,
 }: ChannelSelectorProps) {
   const params = useParams();
   const guildId = params.guildId as string;
@@ -54,6 +56,7 @@ export function ChannelSelector({
         options={options}
         disabled={disabled}
         error={error}
+        isModified={isModified}
         placeholder={allowNone ? "No channel selected" : "Choose a channel"}
         getDisplayText={getDisplayText}
       />

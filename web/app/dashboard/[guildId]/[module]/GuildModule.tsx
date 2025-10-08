@@ -12,7 +12,12 @@ import { DynamicFormRenderer } from "@/app/components/ui/form/DynamicFormRendere
 import { ActionButton } from "@/app/components/ui/ActionButton";
 
 import * as HeroIcons from "react-icons/hi2";
-import { HiCheck, HiXMark, HiArrowPath } from "react-icons/hi2";
+import {
+  HiCheck,
+  HiXMark,
+  HiArrowPath,
+  HiArrowUturnLeft,
+} from "react-icons/hi2";
 
 export default function GuildModule() {
   const params = useParams();
@@ -141,6 +146,37 @@ export default function GuildModule() {
     } finally {
       setRefreshButtonLoading(false);
     }
+  };
+
+  const getDefaultFormData = () => {
+    if (!moduleConfig) return {};
+
+    const defaultData: any = { enabled: currentSettings?.enabled ?? false };
+
+    Object.entries(moduleConfig.categories).forEach(
+      ([categoryKey, category]) => {
+        defaultData[categoryKey] = {};
+        Object.entries(category.options).forEach(([fieldKey, fieldConfig]) => {
+          defaultData[categoryKey][fieldKey] =
+            fieldConfig.default ?? getDefaultValue(fieldConfig.type);
+        });
+      }
+    );
+
+    return defaultData;
+  };
+
+  const isAtDefaultValues = () => {
+    if (!moduleConfig) return true;
+
+    const defaultData = getDefaultFormData();
+    return JSON.stringify(formData) === JSON.stringify(defaultData);
+  };
+
+  const handleReset = () => {
+    if (!moduleConfig) return;
+    const defaultData = getDefaultFormData();
+    setFormData(defaultData);
   };
 
   const handleSave = async () => {
@@ -273,7 +309,7 @@ export default function GuildModule() {
             </div>
           </div>
 
-          {/* Save Button and Refresh Button */}
+          {/* Buttons */}
           <div className="flex items-center gap-3">
             {saveStatus === "success" && (
               <div className="flex items-center gap-2 text-green-500 text-sm font-medium">
@@ -291,16 +327,40 @@ export default function GuildModule() {
               size="md"
               onAction={handleRefresh}
               isLoading={refreshButtonLoading}
+              variant="icon-text"
+              icon={<HiArrowPath className="w-5 h-5 text-neutral-200" />}
+              text="Refresh"
+              loadingIcon={
+                <HiArrowPath className="w-5 h-5 text-neutral-200 animate-spin" />
+              }
+            />
+            <ActionButton
+              size="md"
+              onAction={handleReset}
+              disabled={!formData.enabled || isAtDefaultValues()}
+              variant="icon-text"
+              icon={<HiArrowUturnLeft className="w-5 h-5 text-neutral-200" />}
+              text="Reset to Defaults"
+              title={
+                !formData.enabled
+                  ? "Enable this module to reset settings"
+                  : isAtDefaultValues()
+                  ? "Settings are already at default values"
+                  : "Reset all settings to their default values"
+              }
             />
             <ActionButton
               size="md"
               onAction={handleSave}
               isLoading={isSaving}
               disabled={isSaving || !formData.enabled || !hasChanges}
+              variant="icon-text"
               icon={<HiCheck className="w-5 h-5 text-neutral-200" />}
+              text="Save"
               loadingIcon={
                 <HiArrowPath className="w-5 h-5 text-neutral-200 animate-spin" />
               }
+              className={hasChanges ? "border-1 border-orange-500" : ""}
               title={
                 !formData.enabled
                   ? "Enable this module to save settings"
@@ -319,6 +379,7 @@ export default function GuildModule() {
           <DynamicFormRenderer
             config={moduleConfig}
             formData={formData}
+            originalFormData={originalFormData}
             onChange={updateFormData}
             validationErrors={validationErrors}
             disabled={!formData.enabled}
