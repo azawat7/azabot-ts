@@ -57,8 +57,8 @@ export const LEVEL_MODULE_CONFIG = createModuleConfig({
           description: "Minimum amount of XP awarded for each message",
           type: "number",
           min: 1,
-          max: 100,
-          default: 15,
+          max: 200,
+          default: 25,
           unit: "XP",
         },
         maxXp: {
@@ -66,8 +66,8 @@ export const LEVEL_MODULE_CONFIG = createModuleConfig({
           description: "Maximum amount of XP awarded for each message",
           type: "number",
           min: 1,
-          max: 500,
-          default: 25,
+          max: 200,
+          default: 35,
           unit: "XP",
         },
         cooldown: {
