@@ -24,9 +24,16 @@ export async function GET(
           guildSettings
         ) => {
           try {
+            const [rolesResult, channelsResult] = await Promise.all([
+              GuildService.getGuildRoles(guildId),
+              GuildService.getGuildChannels(guildId),
+            ]);
+
             return NextResponse.json({
               info: guild,
               modules: guildSettings.modules,
+              roles: rolesResult.roles,
+              channels: channelsResult.channels,
             });
           } catch (error) {
             const errorMessage =
@@ -61,5 +68,42 @@ export async function GET(
       );
     },
     { rateLimit: { tier: "moderate" } }
+  );
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ guildId: string }> }
+) {
+  const { guildId } = await params;
+
+  return withSecurity(
+    request,
+    async (req) => {
+      return withGuildPermissions(
+        req,
+        async (_) => {
+          try {
+            await GuildService.clearAllGuildCaches(guildId);
+
+            return NextResponse.json({
+              success: true,
+              message: "Guild cache cleared successfully",
+            });
+          } catch (error) {
+            logger.error("Error clearing guild cache:", error);
+            return NextResponse.json(
+              {
+                error: GuildError.INTERNAL_ERROR,
+                message: "Failed to clear guild cache",
+              },
+              { status: 500 }
+            );
+          }
+        },
+        guildId
+      );
+    },
+    { csrf: true, rateLimit: { tier: "moderate" } }
   );
 }

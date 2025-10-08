@@ -1,6 +1,8 @@
 import { DiscordService } from "@/app/lib/discord";
 import { DatabaseManager } from "@shaw/database";
 import { logger } from "@shaw/utils";
+import { APIChannel, APIRole, ChannelType } from "discord-api-types/v10";
+import { webEnv } from "@/app/lib/config";
 
 export enum GuildError {
   NOT_FOUND = "GUILD_NOT_FOUND",
@@ -31,14 +33,33 @@ export interface GuildInfo {
   owner: boolean;
 }
 
+export interface CachedRole {
+  id: string;
+  name: string;
+  color: number;
+  position: number;
+  managed: boolean;
+}
+
+export interface CachedChannel {
+  id: string;
+  name: string;
+  position: number;
+  type: number;
+}
+
 const ADMIN_GUILDS_CACHE_TTL = 60 * 15; // 15 minutes
 const GUILD_ACCESS_CACHE_TTL = 60 * 5; // 5 minutes
+const GUILD_ROLES_CACHE_TTL = 60 * 60; // 60 minutes
+const GUILD_CHANNELS_CACHE_TTL = 60 * 60; // 60 minutes
 
 export class GuildService {
   private static readonly ADMINISTRATOR = BigInt(0x8);
   private static readonly MANAGE_GUILD = BigInt(0x20);
   private static readonly CACHE_PREFIX = "adminGuilds:";
   private static readonly GUILD_ACCESS_CACHE_PREFIX = "guildAccess:";
+  private static readonly GUILD_ROLES_CACHE_PREFIX = "guildRoles:";
+  private static readonly GUILD_CHANNELS_CACHE_PREFIX = "guildChannels:";
 
   static async getUserAdminGuilds(
     userId: string,
@@ -208,6 +229,166 @@ export class GuildService {
     await this.clearUserGuildCache(userId);
 
     await this.clearGuildAccessCache(userId);
+  }
+
+  static async getGuildRoles(guildId: string): Promise<{
+    roles: CachedRole[];
+  }> {
+    const db = DatabaseManager.getInstance();
+    await db.ensureConnection();
+
+    const cacheKey = `${this.GUILD_ROLES_CACHE_PREFIX}${guildId}`;
+    const cachedRoles = await db.cache.get<CachedRole[]>(cacheKey);
+
+    if (cachedRoles) {
+      return { roles: cachedRoles };
+    }
+
+    try {
+      const response = await DiscordService.makeBotAPICall(
+        `/guilds/${guildId}/roles`,
+        webEnv.botToken
+      );
+
+      if (!response.ok) {
+        throw new Error(`Discord API error: ${response.status}`);
+      }
+
+      const roles: APIRole[] = await response.json();
+
+      const cachedRolesData: CachedRole[] = roles.map((role) => ({
+        id: role.id,
+        name: role.name,
+        color: role.color,
+        position: role.position,
+        managed: role.managed,
+      }));
+
+      await db.cache.set(cacheKey, cachedRolesData, GUILD_ROLES_CACHE_TTL);
+
+      return { roles: cachedRolesData };
+    } catch (error) {
+      logger.error("Error fetching guild roles:", error);
+      throw new Error(GuildError.DISCORD_API_ERROR);
+    }
+  }
+
+  static async getGuildChannels(guildId: string): Promise<{
+    channels: CachedChannel[];
+  }> {
+    const db = DatabaseManager.getInstance();
+    await db.ensureConnection();
+
+    const cacheKey = `${this.GUILD_CHANNELS_CACHE_PREFIX}${guildId}`;
+    const cachedChannels = await db.cache.get<CachedChannel[]>(cacheKey);
+
+    if (cachedChannels) {
+      return { channels: cachedChannels };
+    }
+
+    try {
+      const response = await DiscordService.makeBotAPICall(
+        `/guilds/${guildId}/channels`,
+        webEnv.botToken
+      );
+
+      if (!response.ok) {
+        throw new Error(`Discord API error: ${response.status}`);
+      }
+
+      const channels: APIChannel[] = await response.json();
+
+      const textAndVoiceChannels = channels.filter(
+        (channel) =>
+          channel.type === ChannelType.GuildText ||
+          channel.type === ChannelType.GuildAnnouncement ||
+          channel.type === ChannelType.GuildVoice
+      );
+
+      const cachedChannelsData: CachedChannel[] = textAndVoiceChannels.map(
+        (channel) => ({
+          id: channel.id,
+          name: channel.name || "Unknown",
+          position: (channel as any).position || 0,
+          type: channel.type,
+        })
+      );
+
+      await db.cache.set(
+        cacheKey,
+        cachedChannelsData,
+        GUILD_CHANNELS_CACHE_TTL
+      );
+
+      return { channels: cachedChannelsData };
+    } catch (error) {
+      logger.error("Error fetching guild channels:", error);
+      throw new Error(GuildError.DISCORD_API_ERROR);
+    }
+  }
+
+  static async clearGuildRolesCache(guildId: string): Promise<void> {
+    const db = DatabaseManager.getInstance();
+    await db.ensureConnection();
+
+    const cacheKey = `${this.GUILD_ROLES_CACHE_PREFIX}${guildId}`;
+    await db.cache.delete(cacheKey);
+  }
+
+  static async clearGuildChannelsCache(guildId: string): Promise<void> {
+    const db = DatabaseManager.getInstance();
+    await db.ensureConnection();
+
+    const cacheKey = `${this.GUILD_CHANNELS_CACHE_PREFIX}${guildId}`;
+    await db.cache.delete(cacheKey);
+  }
+
+  static async clearGuildDataCache(guildId: string): Promise<void> {
+    const db = DatabaseManager.getInstance();
+    await db.ensureConnection();
+
+    await this.clearGuildRolesCache(guildId);
+    await this.clearGuildChannelsCache(guildId);
+  }
+
+  static async clearAllGuildCaches(guildId: string): Promise<void> {
+    const db = DatabaseManager.getInstance();
+    await db.ensureConnection();
+
+    await this.clearGuildRolesCache(guildId);
+    await this.clearGuildChannelsCache(guildId);
+  }
+
+  static filterRolesByType(
+    roles: CachedRole[],
+    managed?: boolean
+  ): CachedRole[] {
+    if (managed === undefined) return roles;
+    return roles.filter((role) => role.managed === managed);
+  }
+
+  static getRoleById(
+    roles: CachedRole[],
+    roleId: string
+  ): CachedRole | undefined {
+    return roles.find((role) => role.id === roleId);
+  }
+
+  static getRolesSortedByPosition(roles: CachedRole[]): CachedRole[] {
+    return [...roles].sort((a, b) => b.position - a.position);
+  }
+
+  static getChannelById(
+    channels: CachedChannel[],
+    channelId: string
+  ): CachedChannel | undefined {
+    return channels.find((channel) => channel.id === channelId);
+  }
+
+  static getChannelsSortedByPosition(
+    channels: CachedChannel[]
+  ): CachedChannel[] {
+    return [...channels].sort((a, b) => a.position - b.position);
   }
 
   static getErrorStatusCode(error: GuildError): number {

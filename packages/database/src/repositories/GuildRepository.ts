@@ -1,4 +1,4 @@
-import { IGuild, ModuleSettings, SubcategoryKeys } from "@shaw/types";
+import { IGuild, ModuleSettings } from "@shaw/types";
 import { Snowflake } from "discord.js";
 import { BaseRepository } from "./BaseRepository";
 import { Guild } from "../models/Guild";
@@ -39,21 +39,28 @@ export class GuildRepository extends BaseRepository<IGuild> {
     );
   }
 
-  async updateModuleSetting<
-    T extends keyof ModuleSettings,
-    S extends SubcategoryKeys<T>,
-    K extends keyof ModuleSettings[T][S]
-  >(
+  async updateModuleSetting<T extends keyof ModuleSettings>(
     guildId: Snowflake,
     module: T,
-    subCategory: S,
-    setting: K,
-    newSetting: ModuleSettings[T][S][K]
+    category: keyof ModuleSettings[T],
+    setting: string,
+    newValue: any
   ): Promise<IGuild | null> {
-    const updatePath = `modules.${module}.${String(subCategory)}.${String(
-      setting
-    )}`;
-    return await this.updateOne({ guildId }, { [updatePath]: newSetting });
+    const updatePath = `modules.${module}.${String(category)}.${setting}`;
+    return await this.updateOne({ guildId }, { [updatePath]: newValue });
+  }
+
+  async updateModuleCategory<T extends keyof ModuleSettings>(
+    guildId: Snowflake,
+    module: T,
+    category: keyof ModuleSettings[T],
+    newCategorySettings: ModuleSettings[T][keyof ModuleSettings[T]]
+  ): Promise<IGuild | null> {
+    const updatePath = `modules.${module}.${String(category)}`;
+    return await this.updateOne(
+      { guildId },
+      { [updatePath]: newCategorySettings }
+    );
   }
 
   async toggleCommand(

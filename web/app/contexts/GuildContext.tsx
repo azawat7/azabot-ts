@@ -7,7 +7,8 @@ import React, {
   useCallback,
   ReactNode,
 } from "react";
-import { ModuleSettings } from "@shaw/types";
+import { ModuleSettings, LevelModuleSettings } from "@shaw/types";
+import { CachedRole, CachedChannel } from "@/app/lib/discord/guild.service";
 
 interface Guild {
   id: string;
@@ -22,8 +23,12 @@ interface GuildWithPermissions extends Guild {
 
 interface GuildDetails {
   info: Guild;
-  modules: ModuleSettings | null;
+  modules: {
+    leveling?: LevelModuleSettings;
+  } | null;
   disabledCommands: string[];
+  roles: CachedRole[];
+  channels: CachedChannel[];
 }
 
 interface GuildContextState {
@@ -49,6 +54,16 @@ interface GuildContextType extends GuildContextState {
     commandName: string,
     csrfToken: string
   ) => Promise<void>;
+  updateModuleSettings: (
+    guildId: string,
+    module: keyof ModuleSettings,
+    settings: Record<string, any>,
+    csrfToken: string
+  ) => Promise<{
+    success: boolean;
+    validationErrors?: any[];
+    message?: string;
+  }>;
 
   clearAdminGuilds: () => void;
   clearGuildDetails: (guildId: string) => void;
@@ -277,6 +292,93 @@ export function GuildProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const updateModuleSettings = useCallback(
+    async (
+      guildId: string,
+      module: keyof ModuleSettings,
+      settings: Record<string, any>,
+      csrfToken: string
+    ): Promise<{
+      success: boolean;
+      validationErrors?: any[];
+      message?: string;
+    }> => {
+      try {
+        const response = await fetch(
+          `/api/guilds/${guildId}/modules/settings`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRF-Token": csrfToken,
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              module,
+              settings,
+            }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          return {
+            success: false,
+            validationErrors: data.validationErrors,
+            message: data.message || "Failed to save module settings",
+          };
+        }
+
+        setState((prev) => {
+          const currentGuildDetails = prev.guildDetails[guildId];
+          if (!currentGuildDetails) return prev;
+
+          const updatedGuildDetails: GuildDetails = {
+            ...currentGuildDetails,
+            modules: {
+              ...currentGuildDetails.modules,
+              ...(module === "leveling"
+                ? {
+                    leveling: {
+                      enabled: Boolean(
+                        currentGuildDetails.modules?.leveling?.enabled ?? false
+                      ),
+                      ...data.settings,
+                    } as LevelModuleSettings,
+                  }
+                : {}),
+            },
+          };
+
+          return {
+            ...prev,
+            guildDetails: {
+              ...prev.guildDetails,
+              [guildId]: updatedGuildDetails,
+            },
+          };
+        });
+
+        return {
+          success: true,
+          message: data.message || "Module settings saved successfully",
+        };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Network error occurred while saving settings";
+
+        return {
+          success: false,
+          message: errorMessage,
+        };
+      }
+    },
+    []
+  );
+
   const clearAdminGuilds = useCallback(() => {
     setState((prev) => ({
       ...prev,
@@ -322,6 +424,7 @@ export function GuildProvider({ children }: { children: ReactNode }) {
     fetchGuildDetails,
     toggleModule,
     toggleCommand,
+    updateModuleSettings,
     clearAdminGuilds,
     clearGuildDetails,
     clearAll,

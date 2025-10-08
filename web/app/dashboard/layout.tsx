@@ -1,22 +1,24 @@
 "use client";
+import { ModuleSettings, ALL_MODULE_CONFIGS } from "@shaw/types";
+
 import { ReactNode } from "react";
-import { useAuthContext } from "../contexts/AuthContext";
 import { usePathname, useRouter } from "next/navigation";
+
+import { useGuildDetails } from "@/app/contexts/GuildContext";
+
+import { GuildInfoSkeleton } from "@/app/components/ui/Skeleton";
+import { Breadcrumb } from "@/app/components/ui/Breadcrumb";
+import { UserDropdown } from "@/app/components/layout/UserDropdown";
+
 import { IoArrowBack } from "react-icons/io5";
 import { HiHome } from "react-icons/hi2";
-import { useGuildDetails } from "../contexts/GuildContext";
-import { GuildInfoSkeleton } from "../components/ui/Skeleton";
-import { Breadcrumb } from "../components/ui/Breadcrumb";
-import { MODULE_METADATA, ModuleSettings } from "@shaw/types";
 import * as HeroIcons from "react-icons/hi2";
-import { UserDropdown } from "../components/layout/UserDropdown";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return <DashboardContent>{children}</DashboardContent>;
 }
 
 function DashboardContent({ children }: { children: ReactNode }) {
-  const { user } = useAuthContext();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -113,14 +115,17 @@ function DashboardContent({ children }: { children: ReactNode }) {
 
                 {/* Dynamic module buttons */}
                 {(
-                  Object.keys(MODULE_METADATA) as Array<keyof ModuleSettings>
+                  Object.keys(ALL_MODULE_CONFIGS) as Array<keyof ModuleSettings>
                 ).map((moduleKey) => {
-                  const metadata = MODULE_METADATA[moduleKey];
-                  const moduleSlug = metadata.name.toLowerCase();
+                  const moduleConfig =
+                    ALL_MODULE_CONFIGS[
+                      moduleKey as keyof typeof ALL_MODULE_CONFIGS
+                    ];
+                  const moduleSlug = moduleConfig.id;
                   const isActive = module === moduleSlug;
-                  const IconComponent = (HeroIcons as any)[
-                    metadata.reactIconName
-                  ];
+                  const IconComponent = moduleConfig.reactIconName
+                    ? (HeroIcons as any)[moduleConfig.reactIconName]
+                    : null;
 
                   return (
                     <button
@@ -143,10 +148,10 @@ function DashboardContent({ children }: { children: ReactNode }) {
                           }`}
                         />
                       ) : (
-                        <span className="text-xl">{metadata.emoji}</span>
+                        <span className="text-xl">{moduleConfig.icon}</span>
                       )}
                       <span className="text-sm font-medium">
-                        {metadata.name}
+                        {moduleConfig.name}
                       </span>
                     </button>
                   );

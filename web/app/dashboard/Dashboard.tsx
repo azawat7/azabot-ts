@@ -1,12 +1,14 @@
 "use client";
 
-import { useAuthContext } from "../contexts/AuthContext";
-import { useAdminGuilds } from "../contexts/GuildContext";
-import Link from "next/link";
-import { useCSRF } from "../hooks/useCSRF";
-import { RefreshButton } from "../components/ui/RefreshButton";
-import { GuildCardSkeleton } from "../components/ui/Skeleton";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+
+import { useAuthContext } from "@/app/contexts/AuthContext";
+import { useAdminGuilds } from "@/app/contexts/GuildContext";
+import { useCSRF } from "@/app/hooks/useCSRF";
+
+import { ActionButton } from "@/app/components/ui/ActionButton";
+import { GuildCardSkeleton } from "@/app/components/ui/Skeleton";
 
 export default function Dashboard() {
   const { user } = useAuthContext();
@@ -51,10 +53,10 @@ export default function Dashboard() {
                 Welcome back, {user?.username}! Select a server to manage.
               </p>
             </div>
-            <RefreshButton
+            <ActionButton
               size="md"
-              onRefresh={handleRefresh}
-              isRefreshing={refreshButtonLoading}
+              onAction={handleRefresh}
+              isLoading={refreshButtonLoading}
             />
           </div>
         </div>

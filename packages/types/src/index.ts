@@ -1,11 +1,14 @@
-export * from "./config/base-config.types";
+export * from "./config/types";
+export * from "./config/zod-validation";
 
-export * from "./config/level-config";
-export * from "./config/module-metadata.types";
+export * from "./modules/types";
+export * from "./modules/level-module";
 
-export * from "./modules/level-module.types";
-export * from "./modules/module-settings.types";
+import { LEVEL_MODULE_CONFIG } from "./modules/level-module";
+export const ALL_MODULE_CONFIGS = {
+  leveling: LEVEL_MODULE_CONFIG,
+} as const;
 
-export * from "./database/index.types";
+export * from "./database";
 
-export * from "./commands/commands-metadata.types";
+export * from "./commands/metadata";

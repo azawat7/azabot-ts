@@ -1,4 +1,4 @@
-import { IGuild, LEVEL_MODULE_CONFIG } from "@shaw/types";
+import { IGuild, LEVEL_MODULE_CONFIG, ModuleSettings } from "@shaw/types";
 import mongoose, { Schema } from "mongoose";
 
 function getDefaultValue(configOption: any): any {
@@ -23,13 +23,17 @@ function getMongooseType(configOption: any): any {
     case "number":
     case "time":
       return Number;
+    case "string":
     case "text":
     case "select":
+    case "channel":
+    case "role":
+    case "user":
       return String;
     case "array":
       return Array;
-    case "tuple":
-      return Array;
+    case "object":
+      return mongoose.Schema.Types.Mixed;
     default:
       return mongoose.Schema.Types.Mixed;
   }
@@ -38,17 +42,15 @@ function getMongooseType(configOption: any): any {
 function buildSchemaFromConfig(moduleConfig: any): any {
   const schema: any = {};
 
-  for (const [categoryKey, categoryValue] of Object.entries(moduleConfig)) {
+  for (const [categoryKey, categoryValue] of Object.entries(
+    moduleConfig.categories
+  )) {
     if (typeof categoryValue === "object" && categoryValue !== null) {
       schema[categoryKey] = {};
 
       for (const [settingKey, settingConfig] of Object.entries(
-        categoryValue as any
+        (categoryValue as any).options || {}
       )) {
-        if (settingKey === "name" || settingKey === "description") {
-          continue;
-        }
-
         if (
           typeof settingConfig === "object" &&
           settingConfig !== null &&
@@ -69,7 +71,7 @@ const GuildSchema = new Schema<IGuild>(
   {
     guildId: { type: String, required: true, unique: true, index: true },
     modules: {
-      levelModule: {
+      leveling: {
         enabled: {
           type: Boolean,
           default: false,

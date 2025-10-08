@@ -46,7 +46,7 @@ export function Button({
     lg: "px-6 py-3 text-lg",
   };
 
-  const baseClasses = `inline-flex items-center justify-center font-medium rounded-sm transition-colors focus:outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${variantStyles[variant]} ${sizeStyles[size]} ${className}`;
+  const baseClasses = `inline-flex items-center justify-center font-medium rounded-sm transition-colors  cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${variantStyles[variant]} ${sizeStyles[size]} ${className}`;
 
   const content = (
     <>

@@ -7,6 +7,7 @@ interface WebEnvConfig {
   clientSecret: string;
   baseURL: string;
   authSecret: string;
+  botToken: string;
   nodeEnv: "development" | "production";
 }
 
@@ -16,6 +17,7 @@ function validateWebEnv(): WebEnvConfig {
     clientSecret: process.env.WEB_DISCORD_CLIENT_SECRET,
     baseURL: process.env.WEB_BASE_URL,
     authSecret: process.env.WEB_AUTH_SECRET,
+    botToken: process.env.BOT_TOKEN,
     nodeEnv: process.env.NODE_ENV,
   };
 

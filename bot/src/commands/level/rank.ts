@@ -124,7 +124,7 @@ export default class RankCommand extends Command {
     const guildSettings = await this.client.db.guilds.getOrCreate(
       interaction.guild?.id!
     );
-    const levelModuleSettings = guildSettings.modules.levelModule;
+    const levelModuleSettings = guildSettings.modules.leveling;
     const guildMember = await this.client.db.guildMembers.getOrCreate(
       interaction.guild!.id,
       targetUser.id

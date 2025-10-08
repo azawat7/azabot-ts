@@ -32,7 +32,7 @@ export async function PATCH(
               );
             }
 
-            const validModules: Array<keyof ModuleSettings> = ["levelModule"];
+            const validModules: Array<keyof ModuleSettings> = ["leveling"];
             if (!validModules.includes(module as keyof ModuleSettings)) {
               return NextResponse.json(
                 {

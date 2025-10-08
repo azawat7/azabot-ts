@@ -31,16 +31,6 @@ export const commandsMetadata: CommandMetadata[] = [
   },
 ];
 
-export function getCategories(): string[] {
-  return [...new Set(commandsMetadata.map((cmd) => cmd.category))];
-}
-
-export function getCommandsByCategory(
-  category: CommandCategory
-): CommandMetadata[] {
-  return commandsMetadata.filter((cmd) => cmd.category === category);
-}
-
 export function getCommandByName(name: string): CommandMetadata | undefined {
   return commandsMetadata.find((cmd) => cmd.name === name);
 }
@@ -57,5 +47,3 @@ export function getCommandsGroupedByCategory(): Record<
     return acc;
   }, {} as Record<string, CommandMetadata[]>);
 }
-
-export default commandsMetadata;

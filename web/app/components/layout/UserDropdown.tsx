@@ -59,7 +59,7 @@ export function UserDropdown() {
             alt={`${user.username}'s avatar`}
             width={32}
             height={32}
-            className="rounded-full ring-1 ring-zinc-600"
+            className="rounded-full "
           />
           <span className="text-white font-medium text-sm">
             {user.username}

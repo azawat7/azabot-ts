@@ -33,7 +33,7 @@ export default class MessageCreateEvent extends Event {
         message.guild.id,
         message.author.id,
         xpAmount,
-        guildSettings.modules.levelModule.messageXp.messageXpFormula
+        guildSettings.modules.leveling.messageXp.messageXpFormula
       );
     } catch (error) {
       logger.error("messageCreate, xp:", error);

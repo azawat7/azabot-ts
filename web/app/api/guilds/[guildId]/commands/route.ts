@@ -32,7 +32,6 @@ export async function PATCH(
               );
             }
 
-            // Validate that the command exists in metadata
             const commandMetadata = getCommandByName(commandName);
             if (!commandMetadata) {
               return NextResponse.json(

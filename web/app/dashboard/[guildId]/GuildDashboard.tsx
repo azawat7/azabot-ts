@@ -1,25 +1,29 @@
 "use client";
 
+import {
+  ModuleSettings,
+  getCommandsGroupedByCategory,
+  ALL_MODULE_CONFIGS,
+} from "@shaw/types";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useGuildDetails, useGuildContext } from "../../contexts/GuildContext";
-import { useEffect, useState } from "react";
-import {
-  MODULE_METADATA,
-  ModuleSettings,
-  commandsMetadata,
-  getCommandsGroupedByCategory,
-  CommandMetadata,
-} from "@shaw/types";
+
+import { useGuildDetails, useGuildContext } from "@/app/contexts/GuildContext";
+import { useCSRF } from "@/app/hooks/useCSRF";
+
+import { GuildDashboardSkeleton } from "@/app/components/ui/Skeleton";
+import { ActionButton } from "@/app/components/ui/ActionButton";
+
 import * as HeroIcons from "react-icons/hi2";
 import { HiOutlineArrowPath, HiXMark } from "react-icons/hi2";
-import { useCSRF } from "@/app/hooks/useCSRF";
-import { GuildDashboardSkeleton } from "@/app/components/ui/Skeleton";
 
 export default function GuildDashboard() {
   const params = useParams();
   const guildId = params.guildId as string;
-  const { guildDetails, loading, error } = useGuildDetails(guildId);
+  const { guildDetails, loading, error, clearGuildDetails } =
+    useGuildDetails(guildId);
   const { fetchGuildDetails, toggleModule, toggleCommand } = useGuildContext();
   const { getHeaders } = useCSRF();
   const [togglingModule, setTogglingModule] = useState<string | null>(null);
@@ -28,12 +32,32 @@ export default function GuildDashboard() {
   const [commandToggleError, setCommandToggleError] = useState<string | null>(
     null
   );
+  const [refreshButtonLoading, setRefreshButtonLoading] = useState(false);
 
   useEffect(() => {
     if (!guildDetails && !loading && !error) {
       fetchGuildDetails(guildId);
     }
   }, [guildId, guildDetails, loading, error, fetchGuildDetails]);
+
+  const handleRefresh = async () => {
+    try {
+      setRefreshButtonLoading(true);
+      const headers = await getHeaders();
+      await fetch(`/api/guilds/${guildId}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers,
+      });
+
+      clearGuildDetails();
+      await fetchGuildDetails(guildId);
+    } catch (err) {
+      console.error("Failed to refresh guild data:", err);
+    } finally {
+      setRefreshButtonLoading(false);
+    }
+  };
 
   const handleToggleModule = async (moduleKey: keyof ModuleSettings) => {
     setTogglingModule(moduleKey);
@@ -113,10 +137,17 @@ export default function GuildDashboard() {
 
   return (
     <div className="flex flex-col h-full">
-      <h1 className="text-4xl font-bold mb-6 select-none flex-shrink-0">
-        <span className="text-white">{guildDetails.info.name}</span>{" "}
-        <span className="ml-2 text-neutral-400 text-3xl">Dashboard Page</span>
-      </h1>
+      <div className="flex justify-between items-center mb-6 select-none flex-shrink-0">
+        <h1 className="text-4xl font-bold">
+          <span className="text-white">{guildDetails.info.name}</span>{" "}
+          <span className="ml-2 text-neutral-400 text-3xl">Dashboard Page</span>
+        </h1>
+        <ActionButton
+          size="md"
+          onAction={handleRefresh}
+          isLoading={refreshButtonLoading}
+        />
+      </div>
       {/* Guild Information Container */}
       <div className="px-8 py-6 rounded-2xl border-1 border-zinc-700 bg-zinc-900/50 mb-6 select-none flex-shrink-0">
         <h2 className="text-2xl font-semibold text-white mb-4">
@@ -177,17 +208,23 @@ export default function GuildDashboard() {
           {guildDetails.modules ? (
             <div className="space-y-3 overflow-y-auto flex-1 pr-2">
               {(
-                Object.keys(MODULE_METADATA) as Array<keyof ModuleSettings>
+                Object.keys(ALL_MODULE_CONFIGS) as Array<keyof ModuleSettings>
               ).map((moduleKey) => {
-                const metadata = MODULE_METADATA[moduleKey];
-                const moduleSettings = guildDetails.modules![moduleKey];
+                const moduleConfig =
+                  ALL_MODULE_CONFIGS[
+                    moduleKey as keyof typeof ALL_MODULE_CONFIGS
+                  ];
+                const moduleSettings =
+                  guildDetails.modules?.[
+                    moduleKey as keyof typeof guildDetails.modules
+                  ];
                 const isEnabled = moduleSettings?.enabled ?? false;
                 const isToggling = togglingModule === moduleKey;
                 const hasError = toggleError === moduleKey;
 
-                const IconComponent = (HeroIcons as any)[
-                  metadata.reactIconName
-                ];
+                const IconComponent = moduleConfig.reactIconName
+                  ? (HeroIcons as any)[moduleConfig.reactIconName]
+                  : null;
 
                 return (
                   <div
@@ -200,16 +237,16 @@ export default function GuildDashboard() {
                           <IconComponent className="text-sky-500 text-2xl" />
                         ) : (
                           <span className="text-sky-500 text-xl">
-                            {metadata.emoji}
+                            {moduleConfig.icon}
                           </span>
                         )}
                       </div>
                       <div>
                         <h3 className="text-white font-medium">
-                          {metadata.name}
+                          {moduleConfig.name}
                         </h3>
                         <p className="text-neutral-400 text-sm">
-                          {metadata.description}
+                          {/* {moduleConfig.description} */}
                         </p>
                       </div>
                     </div>
@@ -233,7 +270,7 @@ export default function GuildDashboard() {
                           onChange={() => handleToggleModule(moduleKey)}
                         />
                         <div
-                          className={`w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-700 ${
+                          className={`w-11 h-6 bg-neutral-700  rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-700 ${
                             isToggling ? "opacity-50" : ""
                           }`}
                         ></div>
@@ -314,7 +351,7 @@ export default function GuildDashboard() {
                                 }
                               />
                               <div
-                                className={`w-11 h-6 bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-700 ${
+                                className={`w-11 h-6 bg-neutral-700  rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-700 ${
                                   isToggling ? "opacity-50" : ""
                                 }`}
                               ></div>

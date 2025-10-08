@@ -1,21 +1,25 @@
 "use client";
 
-import { ButtonHTMLAttributes } from "react";
+import { ButtonHTMLAttributes, ReactElement } from "react";
 import { HiArrowPath } from "react-icons/hi2";
 
-interface RefreshButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  onRefresh: () => void;
-  isRefreshing?: boolean;
+interface ActionButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  onAction: () => void;
+  isLoading?: boolean;
   size?: "sm" | "md" | "lg";
+  icon?: ReactElement;
+  loadingIcon?: ReactElement;
 }
 
-export function RefreshButton({
-  onRefresh,
-  isRefreshing = false,
+export function ActionButton({
+  onAction,
+  isLoading = false,
   size = "md",
   className = "",
+  icon,
+  loadingIcon,
   ...props
-}: RefreshButtonProps) {
+}: ActionButtonProps) {
   const sizeClasses = {
     sm: "w-8 h-8 aspect-square",
     md: "w-10 h-10 aspect-square",
@@ -30,8 +34,8 @@ export function RefreshButton({
 
   return (
     <button
-      onClick={onRefresh}
-      disabled={isRefreshing}
+      onClick={onAction}
+      disabled={isLoading}
       className={`
         ${sizeClasses[size]}
         bg-zinc-900 hover:bg-zinc-800 
@@ -44,13 +48,19 @@ export function RefreshButton({
       `}
       {...props}
     >
-      <HiArrowPath
-        className={`
-          ${iconSizeClasses[size]}
-          text-neutral-200
-          ${isRefreshing ? "animate-spin" : ""}
-        `}
-      />
+      {isLoading && loadingIcon ? (
+        loadingIcon
+      ) : icon ? (
+        icon
+      ) : (
+        <HiArrowPath
+          className={`
+            ${iconSizeClasses[size]}
+            text-neutral-200
+            ${isLoading ? "animate-spin" : ""}
+          `}
+        />
+      )}
     </button>
   );
 }

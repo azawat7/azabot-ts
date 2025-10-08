@@ -124,6 +124,21 @@ export class DiscordService {
     });
   }
 
+  static async makeBotAPICall(
+    endpoint: string,
+    botToken: string,
+    options: RequestInit = {}
+  ): Promise<Response> {
+    return this.makeRequest(`https://discord.com/api${endpoint}`, {
+      ...options,
+      headers: {
+        ...options.headers,
+        Authorization: `Bot ${botToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+  }
+
   static isTokenExpired(expiryDate: Date): boolean {
     return Date.now() > expiryDate.getTime() - TOKEN_EXPIRY_BUFFER;
   }

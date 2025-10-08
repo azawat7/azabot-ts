@@ -56,9 +56,9 @@ export class GuildMemberRepository extends BaseRepository<IGuildMember> {
     cooldownMs: number = 60000
   ): Promise<boolean> {
     const member = await this.getOrCreate(guildId, userId);
-
     if (!member || !member.lastXPGain) return false;
-    const timeSinceLastGain = Date.now() - member.lastXPGain.getTime();
+    const timeSinceLastGain =
+      Date.now() - new Date(member.lastXPGain).getTime();
     return timeSinceLastGain < cooldownMs;
   }
 

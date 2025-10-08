@@ -1,6 +1,6 @@
 import { Snowflake } from "discord.js";
-import { ModuleSettings } from "../modules/module-settings.types";
 import { Document } from "mongoose";
+import { ModuleSettings } from "../config/types";
 
 export interface IGuild extends Document {
   guildId: Snowflake;
