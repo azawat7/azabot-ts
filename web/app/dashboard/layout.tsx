@@ -34,48 +34,39 @@ function DashboardContent({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-screen">
-      <nav className="border-r-1 border-zinc-700 h-full w-xs">
-        <div className="border-b-1 border-zinc-700 h-22 mb-6 flex items-center justify-center text-4xl">
-          <a href="/" className="select-none text-white">
+      <nav className="border-r-1 border-default-border h-full w-xs">
+        <div className="border-b-1 border-default-border h-22 mb-6 flex items-center justify-center text-4xl">
+          <a href="/dashboard" className="select-none text-primary-text">
             All Bot
           </a>
         </div>
 
         <div className="p-4">
-          {isMainDashboard ? (
-            <div className="text-center">
-              <div className="text-white text-sm font-semibold mb-2">
-                Choose a server
-              </div>
-              <div className="text-neutral-400 text-xs">
-                Select a server from the main dashboard
-              </div>
-            </div>
-          ) : (
+          {isMainDashboard ? null : (
             <>
               {/* Guild Info */}
               {loading && !currentGuild ? (
                 <GuildInfoSkeleton />
               ) : currentGuild ? (
-                <div className="bg-neutral-800 rounded-lg p-3 mb-4">
+                <div className="bg-default-component rounded-lg p-3 mb-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       {currentGuild.icon ? (
                         <img
                           src={`https://cdn.discordapp.com/icons/${currentGuild.id}/${currentGuild.icon}.png`}
                           alt={currentGuild.name}
-                          className="w-10 h-10 rounded-full"
+                          className="w-10 h-10 rounded-2xl"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-neutral-700 flex items-center justify-center text-sm font-bold text-white">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-primary-text">
                           {currentGuild.name.charAt(0)}
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-white text-sm font-semibold truncate">
+                        <h3 className="text-primary-text text-sm font-semibold truncate">
                           {currentGuild.name}
                         </h3>
-                        <p className="text-neutral-400 text-xs">
+                        <p className="text-secondary-text text-xs">
                           Current Server
                         </p>
                       </div>
@@ -83,7 +74,7 @@ function DashboardContent({ children }: { children: ReactNode }) {
 
                     {/* Back to Dashboard button */}
                     <button
-                      className="flex items-center justify-center w-8 h-8 text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors rounded-md cursor-pointer"
+                      className="flex items-center justify-center w-8 h-8 text-secondary-text hover:text-primary-text hover:bg-active-component transition-colors rounded-md cursor-pointer"
                       onClick={() => router.push("/dashboard")}
                       title="Back to Servers"
                     >
@@ -98,19 +89,19 @@ function DashboardContent({ children }: { children: ReactNode }) {
                 <button
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer transition-colors duration-100 ${
                     !module
-                      ? "bg-neutral-600 text-white"
-                      : "text-neutral-300 hover:text-white hover:bg-neutral-700"
+                      ? "bg-active-component text-primary-text"
+                      : "text-secondary-text hover:text-primary-text hover:bg-hover-component"
                   }`}
                   onClick={() => router.push(`/dashboard/${guildId}`)}
                 >
                   <HiHome
                     className={`w-5 h-5 transition-colors duration-100 ${
                       !module
-                        ? "text-white"
-                        : "text-neutral-400 group-hover:text-white"
+                        ? "text-primary-text"
+                        : "text-secondary-text group-hover:text-primary-text"
                     }`}
                   />
-                  <span className="text-sm font-medium">Home</span>
+                  <span className="text-sm">Home</span>
                 </button>
 
                 {/* Dynamic module buttons */}
@@ -132,8 +123,8 @@ function DashboardContent({ children }: { children: ReactNode }) {
                       key={moduleKey}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer transition-colors duration-100 ${
                         isActive
-                          ? "bg-neutral-600 text-white"
-                          : "text-neutral-300 hover:text-white hover:bg-neutral-700"
+                          ? "bg-active-component text-primary-text"
+                          : "text-secondary-text hover:text-primary-text hover:bg-hover-component"
                       }`}
                       onClick={() =>
                         router.push(`/dashboard/${guildId}/${moduleSlug}`)
@@ -143,16 +134,14 @@ function DashboardContent({ children }: { children: ReactNode }) {
                         <IconComponent
                           className={`w-5 h-5 transition-colors duration-100 ${
                             isActive
-                              ? "text-white"
-                              : "text-neutral-400 group-hover:text-white"
+                              ? "text-primary-text"
+                              : "text-secondary-text group-hover:text-primary-text"
                           }`}
                         />
                       ) : (
                         <span className="text-xl">{moduleConfig.icon}</span>
                       )}
-                      <span className="text-sm font-medium">
-                        {moduleConfig.name}
-                      </span>
+                      <span className="text-sm">{moduleConfig.name}</span>
                     </button>
                   );
                 })}
@@ -162,33 +151,11 @@ function DashboardContent({ children }: { children: ReactNode }) {
         </div>
       </nav>
       <div className="grow flex flex-col min-w-0">
-        <div className="border-b-1 border-zinc-700 h-22 flex items-center justify-between gap-7 p-6 flex-shrink-0">
+        <div className="border-b-1 border-default-border h-22 flex items-center justify-between gap-7 p-6 flex-shrink-0">
           <div className="flex items-center">
             <Breadcrumb />
           </div>
           <UserDropdown />
-          {/* <div className="flex items-center gap-7">
-            <LogoutButton />
-            <div className="border-r-1 border-zinc-700 h-9"></div>
-            {user ? (
-              <>
-                <span className="text-xl text-white">@{user.username}</span>
-                <img
-                  src={
-                    user.avatar
-                      ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
-                      : `https://cdn.discordapp.com/embed/avatars/${
-                          parseInt(user.id) % 5
-                        }.png`
-                  }
-                  alt={`${user.username}'s avatar`}
-                  className="w-14 h-14 rounded-full select-none"
-                />
-              </>
-            ) : (
-              <></>
-            )}
-          </div> */}
         </div>
         <div className="p-8 flex-1 min-h-0">{children}</div>
       </div>

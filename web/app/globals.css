@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+@theme {
+  --color-background: #0a0a0a;
+  --color-secondary-background: #000000;
+
+  --color-default-component: hsla(0, 0%, 10%, 1);
+  --color-hover-component: hsla(0, 0%, 12%, 1);
+  --color-active-component: hsla(0, 0%, 16%, 1);
+
+  --color-primary-text: #ededed;
+  --color-secondary-text: #a0a0a0;
+
+  --color-default-border: hsla(0, 0%, 18%, 1);
+  --color-hover-border: hsla(0, 0%, 27%, 1);
+  --color-active-border: hsla(0, 0%, 53%, 1);
+}
+
 body {
   margin: 0;
 }

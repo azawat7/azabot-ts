@@ -20,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.className}>
-      <body className="bg-neutral-900">
+      <body className="bg-background">
         <AuthProvider>
           <GuildProvider>
             <AppContent>{children}</AppContent>

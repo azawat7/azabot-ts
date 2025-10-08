@@ -137,24 +137,20 @@ export default function GuildDashboard() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex justify-between items-center mb-6 select-none flex-shrink-0">
-        <h1 className="text-4xl font-bold">
-          <span className="text-white">{guildDetails.info.name}</span>{" "}
-          <span className="ml-2 text-neutral-400 text-3xl">Dashboard Page</span>
-        </h1>
-        <ActionButton
-          size="md"
-          onAction={handleRefresh}
-          isLoading={refreshButtonLoading}
-        />
-      </div>
       {/* Guild Information Container */}
-      <div className="px-8 py-6 rounded-2xl border-1 border-zinc-700 bg-zinc-900/50 mb-6 select-none flex-shrink-0">
-        <h2 className="text-2xl font-semibold text-white mb-4">
-          Server Information
-        </h2>
+      <div className="py-6 rounded-2xl select-none flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold text-white mb-4">
+            Server Information
+          </h2>{" "}
+          <ActionButton
+            size="md"
+            onAction={handleRefresh}
+            isLoading={refreshButtonLoading}
+          />
+        </div>
         <div className="flex items-center gap-6 flex-wrap">
-          <div className="flex items-center gap-7">
+          <div className="flex items-center gap-7 ">
             {guildDetails.info.icon ? (
               <img
                 src={`https://cdn.discordapp.com/icons/${guildDetails.info.id}/${guildDetails.info.icon}.png?size=128`}
@@ -162,51 +158,38 @@ export default function GuildDashboard() {
                 className="w-16 h-16 rounded-full"
               />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-zinc-700 flex items-center justify-center">
-                <span className="text-white text-xl font-bold">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center">
+                <span className="text-primary-text text-xl font-bold">
                   {guildDetails.info.name.charAt(0).toUpperCase()}
                 </span>
               </div>
             )}
             <div>
-              <p className="text-neutral-400 text-sm">Server Name</p>
-              <p className="text-white text-lg font-medium select-text">
+              <p className="text-secondary-text text-sm">Server Name</p>
+              <p className="text-primary-text text-lg font-medium select-text">
                 {guildDetails.info.name}
               </p>
             </div>
           </div>
-          <div className="h-12 w-px bg-zinc-700" />
+          <div className="h-12 w-px bg-default-border" />
           <div>
-            <p className="text-neutral-400 text-sm">Server ID</p>
-            <p className="text-white text-lg font-mono select-text">
+            <p className="text-secondary-text text-sm">Server ID</p>
+            <p className="text-primary-text text-lg font-mono select-text">
               {guildDetails.info.id}
             </p>
-          </div>
-          <div className="h-12 w-px bg-zinc-700" />
-          <div>
-            <p className="text-neutral-400 text-sm">Your Role</p>
-            <span
-              className={`inline-block mt-1 px-3 py-1 rounded-full text-sm font-medium ${
-                guildDetails.info.owner
-                  ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
-                  : "bg-sky-500/10 text-sky-500 border border-sky-500/20"
-              }`}
-            >
-              {guildDetails.info.owner ? "👑 Owner" : "🛡️ Administrator"}
-            </span>
           </div>
         </div>
       </div>
 
       {/* Modules and Commands Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
+      <div className="flex justify-between gap-6 w-full min-h-0">
         {/* Modules Container */}
-        <div className="px-8 py-6 rounded-2xl border-1 border-zinc-700 bg-zinc-900/50 select-none flex flex-col min-h-0">
+        <div className="py-6 rounded-2xl select-none flex-1/2 flex-col min-h-0 bg-secondary-background border border-default-border px-6">
           <h2 className="text-2xl font-semibold text-white mb-4 flex-shrink-0">
             Modules
           </h2>
           {guildDetails.modules ? (
-            <div className="space-y-3 overflow-y-auto flex-1 pr-2">
+            <div className="space-y-3 overflow-y-auto flex-1">
               {(
                 Object.keys(ALL_MODULE_CONFIGS) as Array<keyof ModuleSettings>
               ).map((moduleKey) => {
@@ -229,7 +212,7 @@ export default function GuildDashboard() {
                 return (
                   <div
                     key={moduleKey}
-                    className="flex items-center justify-between p-4 rounded-lg bg-zinc-800/50 border border-zinc-700 hover:border-zinc-600 transition-colors"
+                    className="flex items-center justify-between p-4 rounded-lg bg-primary-background border border-default-border hover:border-hover-border transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
@@ -242,17 +225,17 @@ export default function GuildDashboard() {
                         )}
                       </div>
                       <div>
-                        <h3 className="text-white font-medium">
+                        <h3 className="text-primary-text font-medium">
                           {moduleConfig.name}
                         </h3>
-                        <p className="text-neutral-400 text-sm">
-                          {/* {moduleConfig.description} */}
+                        <p className="text-secondary-text text-sm">
+                          {moduleConfig.description}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       {isToggling && (
-                        <HiOutlineArrowPath className="w-4 h-4 text-neutral-400 animate-spin [animation-duration:1.5s]" />
+                        <HiOutlineArrowPath className="w-4 h-4 text-secondary-text animate-spin [animation-duration:1.5s]" />
                       )}
                       {hasError && !isToggling && (
                         <HiXMark className="w-5 h-5 text-red-500" />
@@ -270,7 +253,7 @@ export default function GuildDashboard() {
                           onChange={() => handleToggleModule(moduleKey)}
                         />
                         <div
-                          className={`w-11 h-6 bg-neutral-700  rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-700 ${
+                          className={`w-11 h-6 bg-default-component  rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-700 ${
                             isToggling ? "opacity-50" : ""
                           }`}
                         ></div>
@@ -288,15 +271,15 @@ export default function GuildDashboard() {
         </div>
 
         {/* Commands Container */}
-        <div className="px-8 py-6 rounded-2xl border-1 border-zinc-700 bg-zinc-900/50 select-none flex flex-col min-h-0">
-          <h2 className="text-2xl font-semibold text-white mb-4 flex-shrink-0">
+        <div className="flex-1/2 py-6 rounded-2xl  select-none flex flex-col min-h-0 bg-secondary-background border border-default-border px-6">
+          <h2 className="text-2xl font-semibold text-primary-text mb-4 flex-shrink-0">
             Commands
           </h2>
-          <div className="space-y-4 overflow-y-auto flex-1 pr-2">
+          <div className="space-y-4 overflow-y-auto flex-1">
             {Object.entries(getCommandsGroupedByCategory()).map(
               ([category, commands]) => (
                 <div key={category} className="space-y-2">
-                  <h3 className="text-lg font-medium text-neutral-300 capitalize">
+                  <h3 className="text-lg font-medium text-secondary-text capitalize">
                     {category}
                   </h3>
                   <div className="space-y-2">
@@ -310,7 +293,7 @@ export default function GuildDashboard() {
                       return (
                         <div
                           key={command.name}
-                          className="flex items-center justify-between p-4 rounded-lg bg-zinc-800/50 border border-zinc-700 hover:border-zinc-600 transition-colors"
+                          className="flex items-center justify-between p-4 rounded-lg bg-primary-background border border-default-border hover:border-hover-border transition-colors"
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
@@ -319,17 +302,17 @@ export default function GuildDashboard() {
                               </span>
                             </div>
                             <div>
-                              <h4 className="text-white font-medium font-mono">
+                              <h4 className="text-primary-text font-medium font-mono">
                                 {command.name}
                               </h4>
-                              <p className="text-neutral-400 text-sm">
+                              <p className="text-secondary-text text-sm">
                                 {command.description}
                               </p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
                             {isToggling && (
-                              <HiOutlineArrowPath className="w-4 h-4 text-neutral-400 animate-spin [animation-duration:1.5s]" />
+                              <HiOutlineArrowPath className="w-4 h-4 text-secondary-text animate-spin [animation-duration:1.5s]" />
                             )}
                             {hasError && !isToggling && (
                               <HiXMark className="w-5 h-5 text-red-500" />
@@ -351,7 +334,7 @@ export default function GuildDashboard() {
                                 }
                               />
                               <div
-                                className={`w-11 h-6 bg-neutral-700  rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-700 ${
+                                className={`w-11 h-6 bg-default-component  rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-700 ${
                                   isToggling ? "opacity-50" : ""
                                 }`}
                               ></div>

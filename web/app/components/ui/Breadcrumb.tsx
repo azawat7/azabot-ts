@@ -76,20 +76,20 @@ export function Breadcrumb() {
   };
 
   return (
-    <nav className="flex items-center space-x-1 text-sm">
+    <nav className="flex items-center space-x-1 text-md">
       {breadcrumbs.map((breadcrumb, index) => (
         <div key={index} className="flex items-center">
           {index > 0 && (
-            <HiChevronRight className="w-4 h-4 text-neutral-400 mx-2" />
+            <HiChevronRight className="w-4 h-4 text-secondary-text mx-2" />
           )}
           {breadcrumb.isActive ? (
-            <span className="text-white font-medium select-none">
+            <span className="text-primary-text font-medium select-none">
               {breadcrumb.label}
             </span>
           ) : (
             <button
               onClick={() => handleBreadcrumbClick(breadcrumb.href)}
-              className="transition-colors duration-150 cursor-pointer text-neutral-400 hover:text-white select-none"
+              className="transition-colors duration-150 cursor-pointer text-secondary-text hover:text-primary-text select-none"
             >
               {breadcrumb.label}
             </button>

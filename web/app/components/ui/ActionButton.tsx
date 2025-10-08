@@ -48,12 +48,8 @@ export function ActionButton({
       disabled={isLoading}
       className={`
         ${sizeClasses[size]}
-        bg-zinc-900 hover:bg-zinc-800 
-        ${
-          className.includes("border-")
-            ? ""
-            : "border-1 border-zinc-700 hover:border-zinc-600"
-        }
+        bg-default-component hover:bg-hover-component 
+        ${className.includes("border-") ? "" : "border-1"}
         rounded-xl
         flex items-center justify-center
         transition-all duration-200
@@ -66,14 +62,14 @@ export function ActionButton({
         <div className="flex items-center gap-2">
           {loadingIcon}
           {variant !== "icon" && text && (
-            <span className={`${textSizeClasses[size]} text-neutral-200`}>
+            <span className={`${textSizeClasses[size]} text-primary-text`}>
               {text}
             </span>
           )}
         </div>
       ) : variant === "text" ? (
         <span
-          className={`${textSizeClasses[size]} text-neutral-200 font-medium`}
+          className={`${textSizeClasses[size]} text-primary-text font-medium`}
         >
           {text}
         </span>
@@ -82,7 +78,7 @@ export function ActionButton({
           {icon && <div className={iconSizeClasses[size]}>{icon}</div>}
           {text && (
             <span
-              className={`${textSizeClasses[size]} text-neutral-200 font-medium`}
+              className={`${textSizeClasses[size]} text-primary-text font-medium`}
             >
               {text}
             </span>
@@ -94,7 +90,7 @@ export function ActionButton({
         <HiArrowPath
           className={`
             ${iconSizeClasses[size]}
-            text-neutral-200
+            text-primary-text
             ${isLoading ? "animate-spin" : ""}
           `}
         />

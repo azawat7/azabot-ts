@@ -216,3 +216,61 @@ export function GuildDashboardSkeleton() {
     </div>
   );
 }
+
+export function GuildModuleSkeleton() {
+  return (
+    <div className="h-full overflow-y-auto flex flex-col animate-pulse">
+      {/* Module Header Skeleton */}
+      <div className="mx-6 px-8 py-6 rounded-2xl border-1 border-zinc-700 bg-zinc-900/50 mb-6 select-none flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-zinc-700 flex items-center justify-center">
+              <div className="w-8 h-8 bg-zinc-600 rounded"></div>
+            </div>
+            <div>
+              <div className="flex items-center gap-3">
+                <div className="h-8 bg-zinc-700 rounded w-48"></div>
+                <div className="h-6 bg-zinc-700 rounded-lg w-32"></div>
+              </div>
+              <div className="h-4 bg-zinc-700 rounded w-64 mt-2"></div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="h-6 bg-zinc-700 rounded w-16"></div>
+            <div className="h-10 bg-zinc-700 rounded-lg w-20"></div>
+            <div className="h-10 bg-zinc-700 rounded-lg w-28"></div>
+            <div className="h-10 bg-zinc-700 rounded-lg w-16"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Module Settings Form Skeleton */}
+      <div className="px-6 pb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {[...Array(4)].map((_, categoryIndex) => (
+            <div
+              key={categoryIndex}
+              className="px-8 py-6 rounded-2xl border-1 border-zinc-700 bg-zinc-900/50"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="h-6 bg-zinc-700 rounded w-40"></div>
+              </div>
+              <div className="h-3 bg-zinc-700 rounded w-64 mb-6"></div>
+
+              <div className="grid grid-cols-1 gap-4">
+                {[...Array(5)].map((_, fieldIndex) => (
+                  <div key={fieldIndex} className="space-y-2">
+                    <div className="h-4 bg-zinc-700 rounded w-48"></div>
+                    <div className="h-3 bg-zinc-700 rounded w-64"></div>
+                    <div className="h-10 bg-zinc-700 rounded-lg w-full"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

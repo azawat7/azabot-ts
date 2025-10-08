@@ -132,7 +132,7 @@ export function DynamicFormRenderer({
                 {Object.entries(fieldConfig.itemType.schema).map(
                   ([itemKey, itemFieldConfig]: [string, any]) => (
                     <div key={itemKey} className="flex-1">
-                      <label className="block text-sm font-medium text-neutral-300">
+                      <label className="block text-sm font-medium text-secondary-text">
                         {itemFieldConfig.name}
                       </label>
                     </div>
@@ -144,7 +144,7 @@ export function DynamicFormRenderer({
               </div>
             )}
             renderItem={(item, index, onItemChange, onRemove) => (
-              <div className="flex items-center gap-3 p-2 bg-zinc-800/30 rounded-md border border-zinc-600">
+              <div className="flex items-center gap-3 p-2 bg-secondary-background rounded-md border border-default-border">
                 {Object.entries(fieldConfig.itemType.schema).map(
                   ([itemKey, itemFieldConfig]: [string, any]) => {
                     const itemPath = `${fullPath}.${index}.${itemKey}`;
@@ -203,12 +203,12 @@ export function DynamicFormRenderer({
     return (
       <div
         key={categoryKey}
-        className="px-6 py-5 rounded-2xl border border-zinc-700 bg-zinc-900/50"
+        className="px-6 py-5 rounded-2xl border border-default-border bg-secondary-background"
       >
         <div className="flex items-center gap-3 mb-6">
           {renderCategoryIcon()}
           <div>
-            <h2 className="text-xl font-semibold text-white">
+            <h2 className="text-xl font-semibold text-primary-text">
               {category.name}
             </h2>
             <p className="text-neutral-400 text-sm">{category.description}</p>

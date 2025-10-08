@@ -23,16 +23,16 @@ export function FormField({
   return (
     <div className="space-y-2">
       <label className="block">
-        <span className="text-white font-medium">
+        <span className="text-primary-text font-medium">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </span>
         {description && (
-          <p className="text-neutral-400 text-sm mt-1">{description}</p>
+          <p className="text-secondary-text text-sm mt-1">{description}</p>
         )}
       </label>
       {children}
-      {help && !error && <p className="text-neutral-500 text-xs">{help}</p>}
+      {help && !error && <p className="text-secondary-text text-xs">{help}</p>}
       {error && <p className="text-red-500 text-xs">{error}</p>}
     </div>
   );
@@ -65,12 +65,12 @@ export function TextInput({
       placeholder={placeholder}
       maxLength={maxLength}
       disabled={disabled}
-      className={`w-full px-3 py-2 bg-zinc-800 border rounded-md text-white placeholder-neutral-500 transition-colors focus:outline-none ${
+      className={`w-full px-3 py-2 bg-secondary-background border rounded-md text-primary-text placeholder-secondary-text transition-colors focus:outline-none ${
         error
           ? "border-red-500"
           : isModified
           ? "border-orange-500"
-          : "border-zinc-600 hover:border-zinc-500"
+          : "border-default-border hover:border-hover-border"
       } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
     />
   );
@@ -106,12 +106,12 @@ export function NumberInput({
       max={max}
       step={step}
       disabled={disabled}
-      className={`w-full px-3 py-2 bg-zinc-800 border rounded-md text-white placeholder-neutral-500 transition-colors focus:outline-none ${
+      className={`w-full px-3 py-2 bg-secondary-background border rounded-md text-primary-text placeholder-secondary-text transition-colors focus:outline-none ${
         error
           ? "border-red-500"
           : isModified
           ? "border-orange-500"
-          : "border-zinc-600 hover:border-zinc-500"
+          : "border-default-border hover:border-hover-border"
       } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
     />
   );
@@ -170,15 +170,15 @@ export function SelectInput({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-3 py-2 bg-zinc-800 border rounded-md text-white transition-colors flex items-center justify-between focus:outline-none ${
+        className={`w-full px-3 py-2 bg-secondary-background border rounded-md text-primary-text transition-colors flex items-center justify-between focus:outline-none ${
           error
             ? "border-red-500"
             : isModified
             ? "border-orange-500"
-            : "border-zinc-600 hover:border-zinc-500"
+            : "border-default-border hover:border-hover-border"
         } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
       >
-        <div className={value ? "text-white" : "text-neutral-500"}>
+        <div className={value ? "text-primary-text" : "text-secondary-text"}>
           {value
             ? renderOption
               ? renderOption(value)
@@ -190,19 +190,19 @@ export function SelectInput({
         <HiChevronRight
           className={`w-4 h-4 transition-transform duration-200 ${
             isOpen ? "rotate-90" : ""
-          } ${disabled ? "text-neutral-500" : "text-neutral-400"}`}
+          } ${disabled ? "text-secondary-text" : "text-secondary-text"}`}
         />
       </button>
 
       {isOpen && !disabled && (
-        <div className="absolute z-50 w-full mt-1 bg-zinc-800 border border-zinc-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 bg-secondary-background border border-default-border rounded-md shadow-lg max-h-60 overflow-y-auto">
           {availableOptions.length > 0 ? (
             availableOptions.map((option: string) => (
               <button
                 key={option}
                 type="button"
                 onClick={() => handleSelect(option)}
-                className="w-full px-3 py-2 text-left text-white hover:bg-zinc-700 transition-colors first:rounded-t-md last:rounded-b-md focus:outline-none"
+                className="w-full px-3 py-2 text-left text-primary-text hover:bg-hover-component transition-colors first:rounded-t-md last:rounded-b-md focus:outline-none cursor-pointer"
               >
                 {renderOption
                   ? renderOption(option)
@@ -212,7 +212,7 @@ export function SelectInput({
               </button>
             ))
           ) : (
-            <div className="px-3 py-2 text-neutral-500 text-sm">
+            <div className="px-3 py-2 text-secondary-text text-sm">
               No other options available
             </div>
           )}
@@ -252,7 +252,7 @@ export function BooleanInput({
           className="sr-only peer"
         />
         <div
-          className={`w-11 h-6 bg-neutral-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-700 ${
+          className={`w-11 h-6 bg-default-component rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-700 ${
             disabled ? "opacity-50" : ""
           }`}
         />
@@ -296,16 +296,16 @@ export function TimeInput({
         min={min}
         max={max}
         disabled={disabled}
-        className={`w-full px-3 py-2 bg-zinc-800 border rounded-md text-white placeholder-neutral-500 transition-colors focus:outline-none ${
+        className={`w-full px-3 py-2 bg-secondary-background border rounded-md text-primary-text placeholder-secondary-text transition-colors focus:outline-none ${
           error
             ? "border-red-500"
             : isModified
             ? "border-orange-500"
-            : "border-zinc-600 hover:border-zinc-500"
+            : "border-default-border hover:border-hover-border"
         } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
       />
       <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-        <span className="text-neutral-400 text-sm font-medium">{unit}</span>
+        <span className="text-secondary-text text-sm font-medium">{unit}</span>
       </div>
     </div>
   );

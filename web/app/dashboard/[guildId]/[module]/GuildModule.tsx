@@ -10,6 +10,7 @@ import { useCSRF } from "@/app/hooks/useCSRF";
 
 import { DynamicFormRenderer } from "@/app/components/ui/form/DynamicFormRenderer";
 import { ActionButton } from "@/app/components/ui/ActionButton";
+import { GuildModuleSkeleton } from "@/app/components/ui/Skeleton";
 
 import * as HeroIcons from "react-icons/hi2";
 import {
@@ -248,11 +249,7 @@ export default function GuildModule() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-neutral-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-800"></div>
-      </div>
-    );
+    return <GuildModuleSkeleton />;
   }
 
   if (error || !currentGuildDetails) return redirect("/dashboard");
@@ -279,7 +276,7 @@ export default function GuildModule() {
   return (
     <div className="h-full overflow-y-auto flex flex-col">
       {/* Module Header */}
-      <div className="mx-6 px-8 py-6 rounded-2xl border-1 border-zinc-700 bg-zinc-900/50 mb-6 select-none flex-shrink-0">
+      <div className="mx-6 px-8 py-6 rounded-2xl border-1 border-default-border bg-secondary-background mb-6 select-none flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-lg bg-sky-500/10 flex items-center justify-center">
@@ -293,19 +290,19 @@ export default function GuildModule() {
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold text-white">
+                <h1 className="text-3xl font-bold text-primary-text">
                   {moduleConfig.name}
                 </h1>
                 {!formData.enabled && (
                   <div className="flex items-center gap-2 px-3 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-lg">
                     <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-                    <span className="text-amber-400 text-sm font-medium">
+                    <span className="text-secondary-text text-sm font-medium">
                       Enable this module to modify its settings
                     </span>
                   </div>
                 )}
               </div>
-              <p className="text-neutral-400">{moduleConfig.description}</p>
+              <p className="text-secondary-text">{moduleConfig.description}</p>
             </div>
           </div>
 
@@ -328,10 +325,10 @@ export default function GuildModule() {
               onAction={handleRefresh}
               isLoading={refreshButtonLoading}
               variant="icon-text"
-              icon={<HiArrowPath className="w-5 h-5 text-neutral-200" />}
+              icon={<HiArrowPath className="w-5 h-5 text-primary-text" />}
               text="Refresh"
               loadingIcon={
-                <HiArrowPath className="w-5 h-5 text-neutral-200 animate-spin" />
+                <HiArrowPath className="w-5 h-5 text-primary-text animate-spin" />
               }
             />
             <ActionButton
@@ -339,7 +336,7 @@ export default function GuildModule() {
               onAction={handleReset}
               disabled={!formData.enabled || isAtDefaultValues()}
               variant="icon-text"
-              icon={<HiArrowUturnLeft className="w-5 h-5 text-neutral-200" />}
+              icon={<HiArrowUturnLeft className="w-5 h-5 text-primary-text" />}
               text="Reset to Defaults"
               title={
                 !formData.enabled
@@ -355,10 +352,10 @@ export default function GuildModule() {
               isLoading={isSaving}
               disabled={isSaving || !formData.enabled || !hasChanges}
               variant="icon-text"
-              icon={<HiCheck className="w-5 h-5 text-neutral-200" />}
+              icon={<HiCheck className="w-5 h-5 text-primary-text" />}
               text="Save"
               loadingIcon={
-                <HiArrowPath className="w-5 h-5 text-neutral-200 animate-spin" />
+                <HiArrowPath className="w-5 h-5 text-primary-text animate-spin" />
               }
               className={hasChanges ? "border-1 border-orange-500" : ""}
               title={
