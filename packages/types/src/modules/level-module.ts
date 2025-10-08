@@ -1,9 +1,9 @@
 import { createModuleConfig, createConfigCategory } from "./types";
 import { createDependency, DependencyConditions } from "../config/types";
 
-export type LevelFormula = "classic" | "exponential" | "flat";
+export type LevelFormula = "Easy" | "Medium" | "Hard";
 
-export type NotificationLocation = "disabled" | "current" | "pm" | "custom";
+export type NotificationLocation = "Disabled" | "Current" | "DM" | "Custom";
 
 export interface RoleReward {
   level: number;
@@ -41,16 +41,16 @@ export const LEVEL_MODULE_CONFIG = createModuleConfig({
     messageXp: createConfigCategory({
       name: "Message XP Settings",
       description: "Configure how users earn XP from sending messages",
-      icon: "💬",
+      reactIconName: "HiMiniChatBubbleLeftEllipsis",
       order: 1,
       options: {
         formula: {
           name: "XP Calculation Formula",
           description: "Formula used to calculate XP required for each level",
           type: "select",
-          options: ["classic", "exponential", "flat"] as const,
-          default: "classic",
-          help: "Classic: 5 * level^2 + 50 * level + 100, Exponential: 100 * 1.5^level, Flat: 1000 per level",
+          options: ["Easy", "Medium", "Hard"] as LevelFormula[],
+          default: "Medium",
+          help: "Level 10: Easy ~85 msgs, Medium ~154 msgs, Hard ~284 msgs | Level 50: Easy ~873 msgs, Medium ~1821 msgs, Hard ~4382 msgs",
         },
         minXp: {
           name: "Minimum XP per Message",
@@ -85,16 +85,21 @@ export const LEVEL_MODULE_CONFIG = createModuleConfig({
     notifications: createConfigCategory({
       name: "Level Up Notifications",
       description: "Configure where and how level up messages are sent",
-      icon: "🎉",
+      reactIconName: "HiBell",
       order: 2,
       options: {
         location: {
           name: "Notification Location",
           description: "Where to send level-up notifications",
           type: "select",
-          options: ["disabled", "current", "pm", "custom"] as const,
-          default: "disabled",
-          help: "Disabled: No notifications, Current: Same channel, PM: Direct message, Custom: Specific channel",
+          options: [
+            "Disabled",
+            "Current",
+            "DM",
+            "Custom",
+          ] as NotificationLocation[],
+          default: "Disabled",
+          help: "Disabled: No notifications | Current: Same channel | DM: Direct message | Custom: Specific channel",
         },
         channelId: {
           name: "Custom Channel ID",
@@ -133,7 +138,7 @@ export const LEVEL_MODULE_CONFIG = createModuleConfig({
       name: "Role Rewards System",
       description:
         "Automatically assign roles when users reach specific levels",
-      icon: "🏆",
+      reactIconName: "HiTrophy",
       order: 3,
       options: {
         stack: {

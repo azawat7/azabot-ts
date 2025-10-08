@@ -1,23 +1,20 @@
 import { LevelFormula } from "@shaw/types";
 
+const xpCurves: Record<LevelFormula, { baseXP: number; multiplier: number }> = {
+  Easy: { baseXP: 90, multiplier: 1.45 },
+  Medium: { baseXP: 135, multiplier: 1.5344 },
+  Hard: { baseXP: 170, multiplier: 1.7 },
+};
+
 export class LevelUtils {
   static getXPForLevel(level: number, formula: LevelFormula): number {
-    switch (formula) {
-      case "classic":
-        return Math.floor(100 * Math.pow(level - 1, 1.5));
-      case "exponential":
-        return 5 * (level - 1) ** 2 + (level - 1) * 50 + 75;
-      case "flat":
-        return 1000 * (level - 1);
-    }
+    const { baseXP, multiplier } = xpCurves[formula];
+    return Math.round(baseXP * Math.pow(level, multiplier));
   }
 
   static getLevelFromXP(xp: number, formula: LevelFormula): number {
-    let level = 1;
-    while (this.getXPForLevel(level + 1, formula) <= xp) {
-      level++;
-    }
-    return level;
+    const { baseXP, multiplier } = xpCurves[formula];
+    return Math.floor(Math.pow(xp / baseXP, 1 / multiplier));
   }
 
   static getLevelProgress(

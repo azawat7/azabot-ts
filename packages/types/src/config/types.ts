@@ -144,7 +144,7 @@ export type ConfigValue<T extends ConfigOption> = T extends BooleanConfigOption
 export interface ConfigCategory {
   name: string;
   description: string;
-  icon?: string;
+  reactIconName: string;
   order?: number;
   options: Record<string, ConfigOption>;
 }

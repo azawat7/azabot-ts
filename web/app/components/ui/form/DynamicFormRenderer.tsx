@@ -14,6 +14,7 @@ import { RoleSelector } from "./RoleSelector";
 import { ChannelSelector } from "./ChannelSelector";
 import { ConfigCategory, ModuleConfig } from "@shaw/types";
 import { HiTrash } from "react-icons/hi2";
+import * as Icons from "react-icons/hi2";
 
 interface DynamicFormRendererProps {
   config: ModuleConfig;
@@ -191,7 +192,13 @@ export function DynamicFormRenderer({
   };
 
   const renderCategory = (categoryKey: string, category: ConfigCategory) => {
-    const categoryIcon = category.icon || "⚙️";
+    const renderCategoryIcon = () => {
+      const IconComponent = (Icons as any)[category.reactIconName];
+      console.log(IconComponent, category.reactIconName);
+      if (IconComponent) {
+        return <IconComponent className="w-8 h-8 text-blue-400" />;
+      }
+    };
 
     return (
       <div
@@ -199,7 +206,7 @@ export function DynamicFormRenderer({
         className="px-6 py-5 rounded-2xl border border-zinc-700 bg-zinc-900/50"
       >
         <div className="flex items-center gap-3 mb-6">
-          <span className="text-2xl">{categoryIcon}</span>
+          {renderCategoryIcon()}
           <div>
             <h2 className="text-xl font-semibold text-white">
               {category.name}
