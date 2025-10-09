@@ -7,7 +7,7 @@ import React, {
   useCallback,
   ReactNode,
 } from "react";
-import { ModuleSettings, LevelModuleSettings } from "@shaw/types";
+import { ModuleSettings, LevelModuleSettings, UserGuild } from "@shaw/types";
 import { CachedRole, CachedChannel } from "@/app/lib/discord/guild.service";
 
 interface Guild {
@@ -15,10 +15,6 @@ interface Guild {
   name: string;
   icon: string | null;
   owner: boolean;
-}
-
-interface GuildWithPermissions extends Guild {
-  permissions: string;
 }
 
 interface GuildDetails {
@@ -32,7 +28,7 @@ interface GuildDetails {
 }
 
 interface GuildContextState {
-  adminGuilds: GuildWithPermissions[];
+  adminGuilds: UserGuild[];
   adminGuildsLoading: boolean;
   adminGuildsError: string | null;
 

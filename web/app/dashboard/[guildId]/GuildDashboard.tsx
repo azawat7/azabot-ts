@@ -14,7 +14,6 @@ import { useGuildDetails, useGuildContext } from "@/app/contexts/GuildContext";
 import { useCSRF } from "@/app/hooks/useCSRF";
 
 import { GuildDashboardSkeleton } from "@/app/components/ui/Skeleton";
-import { ActionButton } from "@/app/components/ui/ActionButton";
 
 import * as HeroIcons from "react-icons/hi2";
 import { HiOutlineArrowPath, HiXMark } from "react-icons/hi2";
@@ -22,8 +21,7 @@ import { HiOutlineArrowPath, HiXMark } from "react-icons/hi2";
 export default function GuildDashboard() {
   const params = useParams();
   const guildId = params.guildId as string;
-  const { guildDetails, loading, error, clearGuildDetails } =
-    useGuildDetails(guildId);
+  const { guildDetails, loading, error } = useGuildDetails(guildId);
   const { fetchGuildDetails, toggleModule, toggleCommand } = useGuildContext();
   const { getHeaders } = useCSRF();
   const [togglingModule, setTogglingModule] = useState<string | null>(null);
@@ -32,32 +30,12 @@ export default function GuildDashboard() {
   const [commandToggleError, setCommandToggleError] = useState<string | null>(
     null
   );
-  const [refreshButtonLoading, setRefreshButtonLoading] = useState(false);
 
   useEffect(() => {
     if (!guildDetails && !loading && !error) {
       fetchGuildDetails(guildId);
     }
   }, [guildId, guildDetails, loading, error, fetchGuildDetails]);
-
-  const handleRefresh = async () => {
-    try {
-      setRefreshButtonLoading(true);
-      const headers = await getHeaders();
-      await fetch(`/api/guilds/${guildId}`, {
-        method: "DELETE",
-        credentials: "include",
-        headers,
-      });
-
-      clearGuildDetails();
-      await fetchGuildDetails(guildId);
-    } catch (err) {
-      console.error("Failed to refresh guild data:", err);
-    } finally {
-      setRefreshButtonLoading(false);
-    }
-  };
 
   const handleToggleModule = async (moduleKey: keyof ModuleSettings) => {
     setTogglingModule(moduleKey);
@@ -142,12 +120,7 @@ export default function GuildDashboard() {
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-semibold text-white mb-4">
             Server Information
-          </h2>{" "}
-          <ActionButton
-            size="md"
-            onAction={handleRefresh}
-            isLoading={refreshButtonLoading}
-          />
+          </h2>
         </div>
         <div className="flex items-center gap-6 flex-wrap">
           <div className="flex items-center gap-7 ">

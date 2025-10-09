@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Dropdown } from "@/app/components/ui/Dropdown";
 import { useState } from "react";
 import {
-  HiChevronRight,
+  HiChevronDown,
   HiHome,
   HiArrowRightOnRectangle,
 } from "react-icons/hi2";
@@ -52,7 +52,7 @@ export function UserDropdown() {
       trigger={
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center space-x-3 px-4 py-2.5 rounded-xl bg-default-component hover:bg-hover-component border  transition-all duration-200 cursor-pointer"
+          className="flex items-center space-x-3 px-4 py-2.5 rounded-xl transition-all duration-200 cursor-pointer group"
         >
           <img
             src={avatarUrl}
@@ -61,12 +61,12 @@ export function UserDropdown() {
             height={32}
             className="rounded-full "
           />
-          <span className="text-primary-text font-medium text-sm">
+          <span className="text-primary-text group-hover:text-secondary-text transition-all duration-200 font-medium text-sm">
             {user.username}
           </span>
-          <HiChevronRight
+          <HiChevronDown
             className={`w-4 h-4 text-secondary-text transition-transform duration-200 ${
-              isOpen ? "rotate-90" : ""
+              isOpen ? "rotate-180" : ""
             }`}
           />
         </button>
@@ -77,19 +77,19 @@ export function UserDropdown() {
         className="w-full px-3 py-2 text-left text-secondary-text hover:text-primary-text transition-all duration-200 flex items-center justify-between group rounded-md cursor-pointer"
       >
         <span className="font-medium">Dashboard</span>
-        <HiHome className="w-5 h-5 text-secondary-text group-hover:text-primary-text" />
+        <HiHome className="w-5 h-5 text-secondary-text group-hover:text-primary-text transition-all duration-200" />
       </button>
 
       <button
         onClick={handleLogout}
         disabled={isLoggingOut}
-        className="w-full px-3 py-2 text-left text-secondary-text hover:text-primary-text transition-all duration-200 flex items-center justify-between group rounded-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full px-3 py-2 text-left text-red-500 hover:text-red-300 transition-all duration-200 flex items-center justify-between group rounded-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span className="font-medium">Logout</span>
         {isLoggingOut ? (
-          <HiArrowPath className="w-5 h-5 text-secondary-text animate-spin" />
+          <HiArrowPath className="w-5 h-5 text-red-500 animate-spin" />
         ) : (
-          <HiArrowRightOnRectangle className="w-5 h-5 text-secondary-text group-hover:text-primary-text" />
+          <HiArrowRightOnRectangle className="w-5 h-5 text-red-500 group-hover:text-red-300 transition-all duration-200" />
         )}
       </button>
     </Dropdown>

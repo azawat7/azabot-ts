@@ -29,8 +29,6 @@ export default function GuildModule() {
     guildDetailsLoading,
     guildDetailsError,
     updateModuleSettings,
-    fetchGuildDetails,
-    clearGuildDetails,
   } = useGuildContext();
   const currentGuildDetails = guildDetails[guildId];
   const loading = guildDetailsLoading[guildId] || false;
@@ -102,7 +100,6 @@ export default function GuildModule() {
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
-  const [refreshButtonLoading, setRefreshButtonLoading] = useState(false);
 
   useEffect(() => {
     if (currentSettings && moduleConfig) {
@@ -129,25 +126,6 @@ export default function GuildModule() {
       return () => clearTimeout(timer);
     }
   }, [saveStatus]);
-
-  const handleRefresh = async () => {
-    try {
-      setRefreshButtonLoading(true);
-      const headers = await getHeaders();
-      await fetch(`/api/guilds/${guildId}`, {
-        method: "DELETE",
-        credentials: "include",
-        headers,
-      });
-
-      clearGuildDetails(guildId);
-      await fetchGuildDetails(guildId);
-    } catch (err) {
-      console.error("Failed to refresh guild data:", err);
-    } finally {
-      setRefreshButtonLoading(false);
-    }
-  };
 
   const getDefaultFormData = () => {
     if (!moduleConfig) return {};
@@ -320,17 +298,6 @@ export default function GuildModule() {
                 <span>Error</span>
               </div>
             )}
-            <ActionButton
-              size="md"
-              onAction={handleRefresh}
-              isLoading={refreshButtonLoading}
-              variant="icon-text"
-              icon={<HiArrowPath className="w-5 h-5 text-primary-text" />}
-              text="Refresh"
-              loadingIcon={
-                <HiArrowPath className="w-5 h-5 text-primary-text animate-spin" />
-              }
-            />
             <ActionButton
               size="md"
               onAction={handleReset}

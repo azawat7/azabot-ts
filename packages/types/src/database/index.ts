@@ -39,4 +39,5 @@ export interface UserGuild {
   icon: string | null;
   permissions: string;
   owner: boolean;
+  botInServer: boolean;
 }

@@ -48,9 +48,9 @@ export function ActionButton({
       disabled={isLoading}
       className={`
         ${sizeClasses[size]}
-        bg-default-component hover:bg-hover-component 
+        bg-secondary-background hover:bg-hover-component 
         ${className.includes("border-") ? "" : "border-1"}
-        rounded-xl
+        rounded-lg
         flex items-center justify-center
         transition-all duration-200
         cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed

@@ -50,7 +50,7 @@ export function Dropdown({
       <div>{trigger}</div>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 bg-default-component rounded-xl shadow-xl border border-default-border py-1 px-2 z-50">
+        <div className="absolute right-0 w-full bg-default-component rounded-xl shadow-xl border border-default-border py-1 px-2 z-50">
           {children}
         </div>
       )}

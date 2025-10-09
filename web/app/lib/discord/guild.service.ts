@@ -3,6 +3,7 @@ import { DatabaseManager } from "@shaw/database";
 import { logger } from "@shaw/utils";
 import { APIChannel, APIRole, ChannelType } from "discord-api-types/v10";
 import { webEnv } from "@/app/lib/config";
+import { UserGuild } from "@shaw/types";
 
 export enum GuildError {
   NOT_FOUND = "GUILD_NOT_FOUND",
@@ -16,14 +17,6 @@ export interface GuildPermissionResult {
   hasPermission: boolean;
   guild?: UserGuild;
   error?: GuildError;
-}
-
-export interface UserGuild {
-  id: string;
-  name: string;
-  icon: string | null;
-  permissions: string;
-  owner: boolean;
 }
 
 export interface GuildInfo {
@@ -48,8 +41,6 @@ export interface CachedChannel {
   type: number;
 }
 
-const ADMIN_GUILDS_CACHE_TTL = 60 * 15; // 15 minutes
-const GUILD_ACCESS_CACHE_TTL = 60 * 5; // 5 minutes
 const GUILD_ROLES_CACHE_TTL = 60 * 60; // 60 minutes
 const GUILD_CHANNELS_CACHE_TTL = 60 * 60; // 60 minutes
 
@@ -71,7 +62,10 @@ export class GuildService {
     const cachedUserGuilds = await db.userGuilds.get(userId);
 
     if (cachedUserGuilds) {
-      return { guilds: cachedUserGuilds.guilds };
+      const guildsWithBotPresence = await this.populateBotPresence(
+        cachedUserGuilds.guilds
+      );
+      return { guilds: guildsWithBotPresence };
     }
 
     try {
@@ -92,10 +86,18 @@ export class GuildService {
         icon: guild.icon,
         permissions: guild.permissions,
         owner: guild.owner || false,
+        botInServer: false,
       }));
 
-      await db.userGuilds.set(userId, { userId, guilds: formattedGuilds });
-      return { guilds: formattedGuilds };
+      const guildsWithBotPresence = await this.populateBotPresence(
+        formattedGuilds
+      );
+
+      await db.userGuilds.set(userId, {
+        userId,
+        guilds: guildsWithBotPresence,
+      });
+      return { guilds: guildsWithBotPresence };
     } catch (error) {
       logger.error("Error fetching user guilds:", error);
       throw new Error(GuildError.DISCORD_API_ERROR);
@@ -188,6 +190,28 @@ export class GuildService {
     );
   }
 
+  private static async populateBotPresence(
+    guilds: UserGuild[]
+  ): Promise<UserGuild[]> {
+    const db = DatabaseManager.getInstance();
+    await db.ensureConnection();
+
+    if (guilds.length === 0) {
+      return guilds;
+    }
+
+    const guildIds = guilds.map((g) => g.id);
+    const existingGuilds = await db.guilds.find({
+      guildId: { $in: guildIds },
+    } as any);
+    const existingGuildIds = new Set(existingGuilds.map((g) => g.guildId));
+
+    return guilds.map((guild) => ({
+      ...guild,
+      botInServer: existingGuildIds.has(guild.id),
+    }));
+  }
+
   static hasAdminPermission(permissions: string): boolean {
     const permissionsBigInt = BigInt(permissions);
     return (
@@ -234,6 +258,8 @@ export class GuildService {
       }
 
       const roles: APIRole[] = await response.json();
+
+      console.log(roles);
 
       const cachedRolesData: CachedRole[] = roles.map((role) => ({
         id: role.id,
