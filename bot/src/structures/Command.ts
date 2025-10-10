@@ -1,9 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { CustomClient } from "@/structures";
-import {
-  CommandMetadata,
-  getCommandByName,
-} from "@shaw/types/dist/commands/commands-metadata.types";
+import { CommandMetadata, getCommandByName } from "@shaw/types";
 
 export abstract class Command {
   public guildOnly: boolean = true;

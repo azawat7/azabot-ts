@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logger } from "@shaw/utils";
-import { GuildService, GuildError, UserGuild } from "./guild.service";
+import { GuildService, GuildError } from "./guild.service";
 import { withAuth } from "@/app/lib/auth";
 import { DatabaseManager } from "@shaw/database";
-import { IGuild } from "@shaw/types";
+import { IGuild, UserGuild } from "@shaw/types";
 import { generateDiscordInviteUrl } from "@/app/lib/utils/invite";
 import { env } from "@/app/lib/config";
 
