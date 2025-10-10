@@ -259,8 +259,6 @@ export class GuildService {
 
       const roles: APIRole[] = await response.json();
 
-      console.log(roles);
-
       const cachedRolesData: CachedRole[] = roles.map((role) => ({
         id: role.id,
         name: role.name,

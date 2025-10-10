@@ -194,7 +194,6 @@ export function DynamicFormRenderer({
   const renderCategory = (categoryKey: string, category: ConfigCategory) => {
     const renderCategoryIcon = () => {
       const IconComponent = (Icons as any)[category.reactIconName];
-      console.log(IconComponent, category.reactIconName);
       if (IconComponent) {
         return <IconComponent className="w-8 h-8 text-blue-400" />;
       }

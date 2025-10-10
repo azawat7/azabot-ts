@@ -186,7 +186,6 @@ export default function GuildModule() {
       } else {
         setSaveStatus("error");
         setSaveMessage(result.message || "Failed to save settings");
-        console.log(result.validationErrors);
         if (result.validationErrors) {
           const errors: Record<string, string> = {};
           result.validationErrors.forEach((error: any) => {
